@@ -1,0 +1,1 @@
+/Users/yassir/Desktop/Videos/Shopify Tempaltes/Clothing-1/Velluto/AGENTS.md

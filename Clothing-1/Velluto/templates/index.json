@@ -1,0 +1,15 @@
+{
+  "sections": {
+    "homepage": {
+      "type": "homepage-layout",
+      "settings": {}
+    },
+    "product_showcase": {
+      "type": "dynamic-product-showcase"
+    }
+  },
+  "order": [
+    "homepage",
+    "product_showcase"
+  ]
+}

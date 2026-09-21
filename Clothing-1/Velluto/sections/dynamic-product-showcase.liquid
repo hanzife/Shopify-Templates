@@ -1,0 +1,165 @@
+<section class="jacket-section" id="jacketSection">
+    <div class="jacket-stage">
+        <div class="collection-label">
+            {{ section.settings.subheading }}
+        </div>
+
+        <div class="jacket-copy">
+            <h2>{{ section.settings.heading_line_1 }}<br>{{ section.settings.heading_line_2 }}</h2>
+            <p>{{ section.settings.description | newline_to_br }}</p>
+        </div>
+
+        <div class="model-wrap">
+            {%- if section.settings.model_image != blank -%}
+                <img class="model" src="{{ section.settings.model_image | image_url: width: 1200 }}" alt="Model showcase">
+            {%- endif -%}
+        </div>
+
+        <div class="jacket-viewport">
+            <div class="jacket-track" id="jacketTrack">
+                {%- assign display_limit = section.settings.product_limit | default: 5 -%}
+                
+                {%- if section.settings.collection != blank -%}
+                    {%- comment -%} 1. Pull from selected collection {%- endcomment -%}
+                    {%- for product in section.settings.collection.products limit: display_limit -%}
+                        <div class="jacket-slot" data-product-handle="{{ product.handle }}">
+                            <a href="{{ product.url }}">
+                                {%- if product.featured_image != blank -%}
+                                    <img class="jacket-image" src="{{ product.featured_image | image_url: width: 1000 }}" alt="{{ product.title }}">
+                                {%- else -%}
+                                    {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
+                                {%- endif -%}
+                            </a>
+                        </div>
+                    {%- endfor -%}
+                {%- elsif collections['all'].products.size > 0 -%}
+                    {%- comment -%} 2. Auto-fallback: Pulls products from your store inventory if no collection is picked {%- endcomment -%}
+                    {%- for product in collections['all'].products limit: display_limit -%}
+                        <div class="jacket-slot" data-product-handle="{{ product.handle }}">
+                            <a href="{{ product.url }}">
+                                {%- if product.featured_image != blank -%}
+                                    <img class="jacket-image" src="{{ product.featured_image | image_url: width: 1000 }}" alt="{{ product.title }}">
+                                {%- else -%}
+                                    {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
+                                {%- endif -%}
+                            </a>
+                        </div>
+                    {%- endfor -%}
+                {%- else -%}
+                    {%- comment -%} 3. Manual Blocks fallback {%- endcomment -%}
+                    {%- for block in section.blocks -%}
+                        <div class="jacket-slot" {{ block.shopify_attributes }}>
+                            {%- if block.settings.item_image != blank -%}
+                                <img class="jacket-image" src="{{ block.settings.item_image | image_url: width: 1000 }}" alt="{{ block.settings.item_title }}">
+                            {%- else -%}
+                                {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
+                            {%- endif -%}
+                        </div>
+                    {%- endfor -%}
+                {%- endif -%}
+            </div>
+        </div>
+
+        <div class="jacket-label" id="jacketLabel">
+            Item 01
+        </div>
+
+        <div class="jacket-ui">
+            <div class="jacket-counter">
+                <span id="currentJacket">01</span>
+                &nbsp;/&nbsp;
+                <span id="totalJackets">
+                    {%- if section.settings.collection != blank -%}
+                        {{ section.settings.collection.products.size | default: '05' | pad_zero }}
+                    {%- else -%}
+                        {{ collections['all'].products.size | default: '05' }}
+                    {%- endif -%}
+                </span>
+            </div>
+            <div class="jacket-progress">
+                <div class="jacket-progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% schema %}
+{
+  "name": "Dynamic Product Showcase",
+  "class": "velluto-product-showcase-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading Label",
+      "default": "The Collection"
+    },
+    {
+      "type": "text",
+      "id": "heading_line_1",
+      "label": "Heading Line 1",
+      "default": "FEATURED"
+    },
+    {
+      "type": "text",
+      "id": "heading_line_2",
+      "label": "Heading Line 2",
+      "default": "LOOKS"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description Text",
+      "default": "Designed for movement.\nBuilt for every moment."
+    },
+    {
+      "type": "image_picker",
+      "id": "model_image",
+      "label": "Center Model / Look Image"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Pull Products From Collection (Smart)"
+    },
+    {
+      "type": "range",
+      "id": "product_limit",
+      "min": 2,
+      "max": 10,
+      "step": 1,
+      "label": "Max Products to Display",
+      "default": 5
+    }
+  ],
+  "blocks": [
+    {
+      "type": "custom_item",
+      "name": "Manual Item (Fallback)",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "item_image",
+          "label": "Item Image"
+        },
+        {
+          "type": "text",
+          "id": "item_title",
+          "label": "Item Title",
+          "default": "Look 01"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Dynamic Product Showcase",
+      "blocks": [
+        { "type": "custom_item", "settings": { "item_title": "Look 01" } },
+        { "type": "custom_item", "settings": { "item_title": "Look 02" } },
+        { "type": "custom_item", "settings": { "item_title": "Look 03" } }
+      ]
+    }
+  ]
+}
+{% endschema %}
