@@ -1,128 +1,445 @@
-<!-- Load GSAP and ScrollTrigger CDNs directly so they never fail -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+{{ 'product-grid.css' | asset_url | stylesheet_tag }}
 
-<section class="jacket-section" id="jacketSection">
-    <div class="jacket-stage">
-        <div class="collection-label">
-            {{ section.settings.subheading }}
-        </div>
+{%- liquid
+  assign display_limit = section.settings.product_limit | default: 4
+  assign img_limit = section.settings.images_per_card | default: 3
+  assign cols = section.settings.columns | default: 4
+  assign img_vw = 100 | divided_by: cols
 
-        <div class="jacket-copy">
-            <h2>{{ section.settings.heading_line_1 }}<br>{{ section.settings.heading_line_2 }}</h2>
-            <p>{{ section.settings.description | newline_to_br }}</p>
-        </div>
+  if section.settings.collection != blank
+    assign grid_products = section.settings.collection.products
+  else
+    assign grid_products = collections['all'].products
+  endif
+-%}
 
-        <div class="model-wrap">
-            {%- if section.settings.model_image != blank -%}
-                <img class="model" src="{{ section.settings.model_image | image_url: width: 1200 }}" alt="Model showcase">
-            {%- endif -%}
-        </div>
+<section class="product-grid-section" id="ProductGrid-{{ section.id }}" style="--pg-cols: {{ cols }};">
+    {%- if section.settings.heading != blank -%}
+        <h2>{{ section.settings.heading | escape }}</h2>
+    {%- endif -%}
 
-        <div class="jacket-viewport">
-            <div class="jacket-track" id="jacketTrack">
-                {%- assign display_limit = section.settings.product_limit | default: 5 -%}
-                
-                {%- if section.settings.collection != blank -%}
-                    {%- for product in section.settings.collection.products limit: display_limit -%}
-                        <div class="jacket-slot" data-product-handle="{{ product.handle }}">
-                            <a href="{{ product.url }}">
-                                {%- if product.featured_media != blank -%}
-                                    <img class="jacket-image" src="{{ product.featured_media | image_url: width: 800 }}" alt="{{ product.title | escape }}" loading="lazy">
+    {%- if grid_products.size > 0 -%}
+        <div class="product-grid" data-product-grid>
+            {%- for product in grid_products limit: display_limit -%}
+                <article class="product-card" data-product-handle="{{ product.handle }}">
+                    <a href="{{ product.url }}" class="product-card__link">
+                        <div class="product-image-wrapper">
+                            <div class="product-image-track">
+                                {%- for image in product.images limit: img_limit -%}
+                                    <img
+                                        class="product-slide-img"
+                                        src="{{ image | image_url: width: 800 }}"
+                                        srcset="{{ image | image_url: width: 400 }} 400w, {{ image | image_url: width: 600 }} 600w, {{ image | image_url: width: 800 }} 800w, {{ image | image_url: width: 1200 }} 1200w"
+                                        sizes="(max-width: 900px) 50vw, {{ img_vw }}vw"
+                                        alt="{{ image.alt | default: product.title | escape }}"
+                                        draggable="false"
+                                        loading="{% if forloop.first and forloop.parentloop.index <= 4 %}eager{% else %}lazy{% endif %}"
+                                    >
                                 {%- else -%}
-                                    {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
-                                {%- endif -%}
-                            </a>
+                                    {{ 'product-1' | placeholder_svg_tag: 'product-slide-img' }}
+                                {%- endfor -%}
+                            </div>
                         </div>
-                    {%- endfor -%}
-                {%- else -%}
-                    {%- for product in collections['all'].products limit: display_limit -%}
-                        <div class="jacket-slot" data-product-handle="{{ product.handle }}">
-                            <a href="{{ product.url }}">
-                                {%- if product.featured_media != blank -%}
-                                    <img class="jacket-image" src="{{ product.featured_media | image_url: width: 800 }}" alt="{{ product.title | escape }}" loading="lazy">
+
+                        <div class="product-info">
+                            <h3 class="product-title">{{ product.title | escape }}</h3>
+                            <p class="product-price">
+                                {%- if section.settings.show_currency -%}
+                                    {%- assign price_now = product.price | money_with_currency -%}
+                                    {%- assign price_was = product.compare_at_price | money_with_currency -%}
                                 {%- else -%}
-                                    {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
+                                    {%- assign price_now = product.price | money -%}
+                                    {%- assign price_was = product.compare_at_price | money -%}
                                 {%- endif -%}
-                            </a>
+                                <span class="product-price__now">{{ price_now }}</span>
+                                {%- if product.compare_at_price > product.price -%}
+                                    <s class="product-price__was">{{ price_was }}</s>
+                                {%- endif -%}
+                            </p>
                         </div>
-                    {%- endfor -%}
-                {%- endif -%}
-            </div>
-        </div>
+                    </a>
 
-        <div class="jacket-label" id="jacketLabel">
-            Item 01
+                    {%- if section.settings.show_wishlist -%}
+                        <button type="button" class="product-wishlist-btn" data-product-handle="{{ product.handle }}" aria-label="Add to wishlist" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                            </svg>
+                        </button>
+                    {%- endif -%}
+                </article>
+            {%- endfor -%}
         </div>
-
-        <div class="jacket-ui">
-            <div class="jacket-counter">
-                <span id="currentJacket">01</span>
-                &nbsp;/&nbsp;
-                <span id="totalJackets">05</span>
-            </div>
-            <div class="jacket-progress">
-                <div class="jacket-progress-bar" id="progressBar"></div>
-            </div>
-        </div>
-    </div>
+    {%- else -%}
+        <p class="product-grid-empty">No products found. Pick a collection in the section settings.</p>
+    {%- endif -%}
 </section>
 
-<!-- Link your custom GSAP horizontal scroll script file -->
-{{ 'jacket-collection.js' | asset_url | script_tag }}
+<style>
+  .product-grid-section {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 60px 32px;
+      background: #ffffff;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #111111;
+      box-sizing: border-box;
+  }
+
+  .product-grid-section *,
+  .product-grid-section *::before,
+  .product-grid-section *::after {
+      box-sizing: border-box;
+  }
+
+  .product-grid-section h2 {
+      font-size: 24px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      margin: 0 0 24px;
+  }
+
+  .product-grid {
+      display: grid;
+      grid-template-columns: repeat(var(--pg-cols, 4), 1fr);
+      gap: 16px;
+  }
+
+  .product-grid-empty {
+      font-size: 14px;
+      color: rgba(17, 17, 17, 0.6);
+      text-align: center;
+      margin: 0;
+  }
+
+  /* ---------- Card ---------- */
+
+  .product-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      min-width: 0;
+  }
+
+  .product-card__link {
+      display: flex;
+      flex-direction: column;
+      color: inherit;
+      text-decoration: none;
+  }
+
+  .product-card__link:focus-visible {
+      outline: 2px solid #111;
+      outline-offset: 3px;
+  }
+
+  .product-image-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9 / 14;
+      background: #f4f4f4;
+      overflow-x: auto;
+      overflow-y: hidden;
+      display: flex;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      scroll-behavior: smooth;
+  }
+
+  .product-image-wrapper::-webkit-scrollbar {
+      display: none;
+  }
+
+  .product-image-track {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      flex-shrink: 0;
+  }
+
+  .product-slide-img {
+      width: 100%;
+      height: 100%;
+      flex: 0 0 100%;
+      object-fit: cover;
+      display: block;
+      scroll-snap-align: start;
+      user-select: none;
+      -webkit-user-drag: none;
+      transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .product-card:hover .product-slide-img {
+      transform: scale(1.03);
+  }
+
+  /* ---------- Wishlist heart ---------- */
+
+  .product-wishlist-btn {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #111;
+      z-index: 2;
+      opacity: 0.8;
+      transition: opacity 200ms ease, transform 200ms ease;
+  }
+
+  .product-wishlist-btn:hover {
+      opacity: 1;
+      transform: scale(1.1);
+  }
+
+  .product-wishlist-btn:focus-visible {
+      outline: 2px solid #111;
+      outline-offset: 2px;
+  }
+
+  .product-wishlist-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      transition: fill 200ms ease;
+  }
+
+  .product-wishlist-btn.is-active {
+      opacity: 1;
+  }
+
+  .product-wishlist-btn.is-active svg {
+      fill: currentColor;
+  }
+
+  /* ---------- Info ---------- */
+
+  .product-info {
+      padding-top: 12px;
+      padding-right: 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+  }
+
+  .product-title {
+      font-size: 13px;
+      font-weight: 400;
+      color: #111111;
+      line-height: 1.3;
+      margin: 0;
+  }
+
+  .product-price {
+      font-size: 13px;
+      font-weight: 600;
+      color: #111111;
+      margin: 0;
+  }
+
+  .product-price__was {
+      margin-left: 6px;
+      font-weight: 400;
+      color: rgba(17, 17, 17, 0.5);
+  }
+
+  /* ---------- Responsive ---------- */
+
+  @media (max-width: 900px) {
+      .product-grid-section {
+          min-height: auto;
+          padding: 60px 20px;
+      }
+
+      .product-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+      }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+      .product-image-wrapper { scroll-behavior: auto; }
+      .product-slide-img,
+      .product-wishlist-btn,
+      .product-wishlist-btn svg { transition: none; }
+      .product-card:hover .product-slide-img { transform: none; }
+  }
+</style>
+
+<script>
+  (function () {
+      'use strict';
+
+      var STORAGE_KEY = 'stich_wishlist';
+      var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+      /* ---------- Wishlist (saved in this browser) ---------- */
+
+      function readWishlist() {
+          try {
+              var raw = window.localStorage.getItem(STORAGE_KEY);
+              var list = raw ? JSON.parse(raw) : [];
+              return Array.isArray(list) ? list : [];
+          } catch (e) {
+              return [];
+          }
+      }
+
+      function writeWishlist(list) {
+          try {
+              window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+          } catch (e) { /* storage blocked, ignore */ }
+      }
+
+      function setWishlistState(btn, on) {
+          btn.classList.toggle('is-active', on);
+          btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+          btn.setAttribute('aria-label', on ? 'Remove from wishlist' : 'Add to wishlist');
+      }
+
+      function syncWishlist(scope) {
+          var saved = readWishlist();
+          var buttons = (scope || document).querySelectorAll('.product-wishlist-btn');
+          Array.prototype.forEach.call(buttons, function (btn) {
+              var handle = btn.getAttribute('data-product-handle');
+              setWishlistState(btn, saved.indexOf(handle) !== -1);
+          });
+      }
+
+      document.addEventListener('click', function (event) {
+          var btn = event.target.closest && event.target.closest('.product-wishlist-btn');
+          if (!btn) return;
+
+          event.preventDefault();
+
+          var handle = btn.getAttribute('data-product-handle');
+          var list = readWishlist();
+          var index = list.indexOf(handle);
+
+          if (index === -1) {
+              list.push(handle);
+          } else {
+              list.splice(index, 1);
+          }
+
+          writeWishlist(list);
+          setWishlistState(btn, index === -1);
+      });
+
+      /* ---------- Desktop: move the mouse across a card to browse its images ---------- */
+
+      function scrollToSlide(wrapper, index) {
+          if (wrapper.getAttribute('data-slide') === String(index)) return;
+          wrapper.setAttribute('data-slide', index);
+          wrapper.scrollTo({ left: index * wrapper.clientWidth });
+      }
+
+      if (canHover) {
+          document.addEventListener('mousemove', function (event) {
+              var wrapper = event.target.closest && event.target.closest('.product-image-wrapper');
+              if (!wrapper) return;
+
+              var slides = wrapper.querySelectorAll('.product-slide-img').length;
+              if (slides < 2) return;
+
+              var rect = wrapper.getBoundingClientRect();
+              var ratio = (event.clientX - rect.left) / rect.width;
+              var index = Math.max(0, Math.min(slides - 1, Math.floor(ratio * slides)));
+              scrollToSlide(wrapper, index);
+          });
+
+          document.addEventListener('mouseout', function (event) {
+              var wrapper = event.target.closest && event.target.closest('.product-image-wrapper');
+              if (!wrapper || wrapper.contains(event.relatedTarget)) return;
+              scrollToSlide(wrapper, 0);
+          });
+      }
+
+      /* ---------- Init + Shopify theme editor ---------- */
+
+      syncWishlist();
+
+      document.addEventListener('shopify:section:load', function (event) {
+          syncWishlist(event.target);
+      });
+  })();
+</script>
 
 {% schema %}
 {
-  "name": "Dynamic Product Showcase",
-  "class": "velluto-product-showcase-section",
+  "name": "Product Grid",
+  "class": "velluto-product-grid-section",
   "settings": [
     {
       "type": "text",
-      "id": "subheading",
-      "label": "Subheading Label",
-      "default": "The Collection"
-    },
-    {
-      "type": "text",
-      "id": "heading_line_1",
-      "label": "Heading Line 1",
-      "default": "FEATURED"
-    },
-    {
-      "type": "text",
-      "id": "heading_line_2",
-      "label": "Heading Line 2",
-      "default": "LOOKS"
-    },
-    {
-      "type": "textarea",
-      "id": "description",
-      "label": "Description Text",
-      "default": "Designed for movement.\nBuilt for every moment."
-    },
-    {
-      "type": "image_picker",
-      "id": "model_image",
-      "label": "Center Model / Look Image"
+      "id": "heading",
+      "label": "Heading (optional)",
+      "info": "Leave empty to hide the heading."
     },
     {
       "type": "collection",
       "id": "collection",
-      "label": "Pull Products From Collection (Smart)"
+      "label": "Pull Products From Collection",
+      "info": "If empty, products from the 'All' collection are shown."
     },
     {
       "type": "range",
       "id": "product_limit",
       "min": 2,
-      "max": 10,
+      "max": 24,
       "step": 1,
       "label": "Max Products to Display",
-      "default": 5
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "min": 3,
+      "max": 5,
+      "step": 1,
+      "label": "Columns (desktop)",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "images_per_card",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "label": "Swipeable images per product",
+      "info": "Uses the product's own images, in the order set in the product page.",
+      "default": 3
+    },
+    {
+      "type": "checkbox",
+      "id": "show_wishlist",
+      "label": "Show wishlist heart",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_currency",
+      "label": "Show currency code in price (e.g. 849.00 MAD)",
+      "default": true
     }
   ],
   "presets": [
     {
-      "name": "Dynamic Product Showcase"
+      "name": "Product Grid"
     }
   ]
 }
