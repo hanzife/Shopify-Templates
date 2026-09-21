@@ -3,6 +3,7 @@
     var REVEAL_ORDER = [0, 1, 2, 3, 4];
     var REVEAL_STEP_MS = 180;
     var REVEAL_START_MS = 12;
+    var IMAGE_WAIT_MAX_MS = 3000; // never block the reveal longer than this
 
     var ZOOM_LEVELS = {
         wide: { scale: 0.93 },
@@ -18,10 +19,15 @@
     var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var isCoarsePointer = window.matchMedia('(hover: none), (pointer: coarse)').matches;
 
-    var roots = document.querySelectorAll('[data-hero-viewfinder]');
-    roots.forEach(initHero);
+    function initAll(scope) {
+        var roots = (scope || document).querySelectorAll('[data-hero-viewfinder]');
+        Array.prototype.forEach.call(roots, initHero);
+    }
 
     function initHero(root) {
+        if (root.__heroInit) return;
+        root.__heroInit = true;
+
         var grid = root.querySelector('[data-hero-grid]');
         var stage = root.querySelector('[data-hero-stage]');
         var spacer = root.querySelector('.hero-viewfinder__spacer');
@@ -33,7 +39,26 @@
         setupReveal(root, tiles);
         setupZoom(grid, zoomButtons);
         setupTileActivation(tiles);
-        setupScrollExit(root, spacer, stage);
+        root.__heroDestroy = setupScrollExit(root, spacer, stage);
+    }
+
+    // The 5 tiles share one image, so we only need to wait for the first one.
+    function whenImageReady(img, callback) {
+        if (!img || (img.complete && img.naturalWidth > 0)) {
+            callback();
+            return;
+        }
+
+        var done = false;
+        function finish() {
+            if (done) return;
+            done = true;
+            callback();
+        }
+
+        img.addEventListener('load', finish, { once: true });
+        img.addEventListener('error', finish, { once: true });
+        window.setTimeout(finish, IMAGE_WAIT_MAX_MS);
     }
 
     function setupReveal(root, tiles) {
@@ -60,13 +85,17 @@
             hit.style.setProperty('--hv-reveal-delay', delay + 'ms');
         });
 
-        requestAnimationFrame(function () {
+        var firstImg = root.querySelector('[data-hero-tile-img]');
+
+        whenImageReady(firstImg, function () {
             requestAnimationFrame(function () {
-                root.classList.add('is-revealed');
-                var finalDelay = REVEAL_START_MS + (order.length - 1) * REVEAL_STEP_MS + 760;
-                window.setTimeout(function () {
-                    root.classList.add('is-spaced');
-                }, finalDelay);
+                requestAnimationFrame(function () {
+                    root.classList.add('is-revealed');
+                    var finalDelay = REVEAL_START_MS + (order.length - 1) * REVEAL_STEP_MS + 760;
+                    window.setTimeout(function () {
+                        root.classList.add('is-spaced');
+                    }, finalDelay);
+                });
             });
         });
     }
@@ -115,7 +144,7 @@
     }
 
     function setupScrollExit(root, spacer, stage) {
-        if (!spacer || prefersReducedMotion) return;
+        if (!spacer || prefersReducedMotion) return function () {};
 
         var ticking = false;
         var spacerTop = 0;
@@ -147,6 +176,11 @@
             requestAnimationFrame(update);
         }
 
+        function onResize() {
+            measure();
+            if (active) update();
+        }
+
         measure();
 
         var observer = new IntersectionObserver(function (entries) {
@@ -164,10 +198,27 @@
         }, { threshold: [0, 0.01, 0.99, 1] });
 
         observer.observe(spacer);
+        window.addEventListener('resize', onResize);
 
-        window.addEventListener('resize', function () {
-            measure();
-            if (active) update();
-        });
+        // Cleanup, used when the section is re-rendered in the theme editor
+        return function destroy() {
+            observer.disconnect();
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onResize);
+        };
     }
+
+    initAll();
+
+    // Shopify theme editor: re-init when the section is re-rendered (e.g. image changed)
+    document.addEventListener('shopify:section:load', function (event) {
+        initAll(event.target);
+    });
+
+    document.addEventListener('shopify:section:unload', function (event) {
+        var roots = event.target.querySelectorAll('[data-hero-viewfinder]');
+        Array.prototype.forEach.call(roots, function (root) {
+            if (typeof root.__heroDestroy === 'function') root.__heroDestroy();
+        });
+    });
 })();

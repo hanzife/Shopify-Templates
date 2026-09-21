@@ -1,3 +1,7 @@
+<!-- Load GSAP and ScrollTrigger CDNs directly so they never fail -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
 <section class="jacket-section" id="jacketSection">
     <div class="jacket-stage">
         <div class="collection-label">
@@ -20,25 +24,11 @@
                 {%- assign display_limit = section.settings.product_limit | default: 5 -%}
                 
                 {%- if section.settings.collection != blank -%}
-                    {%- comment -%} 1. Pull from selected collection {%- endcomment -%}
                     {%- for product in section.settings.collection.products limit: display_limit -%}
                         <div class="jacket-slot" data-product-handle="{{ product.handle }}">
                             <a href="{{ product.url }}">
-                                {%- if product.featured_image != blank -%}
-                                    <img class="jacket-image" src="{{ product.featured_image | image_url: width: 1000 }}" alt="{{ product.title }}">
-                                {%- else -%}
-                                    {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
-                                {%- endif -%}
-                            </a>
-                        </div>
-                    {%- endfor -%}
-                {%- elsif collections['all'].products.size > 0 -%}
-                    {%- comment -%} 2. Auto-fallback: Pulls products from your store inventory if no collection is picked {%- endcomment -%}
-                    {%- for product in collections['all'].products limit: display_limit -%}
-                        <div class="jacket-slot" data-product-handle="{{ product.handle }}">
-                            <a href="{{ product.url }}">
-                                {%- if product.featured_image != blank -%}
-                                    <img class="jacket-image" src="{{ product.featured_image | image_url: width: 1000 }}" alt="{{ product.title }}">
+                                {%- if product.featured_media != blank -%}
+                                    <img class="jacket-image" src="{{ product.featured_media | image_url: width: 800 }}" alt="{{ product.title | escape }}" loading="lazy">
                                 {%- else -%}
                                     {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
                                 {%- endif -%}
@@ -46,14 +36,15 @@
                         </div>
                     {%- endfor -%}
                 {%- else -%}
-                    {%- comment -%} 3. Manual Blocks fallback {%- endcomment -%}
-                    {%- for block in section.blocks -%}
-                        <div class="jacket-slot" {{ block.shopify_attributes }}>
-                            {%- if block.settings.item_image != blank -%}
-                                <img class="jacket-image" src="{{ block.settings.item_image | image_url: width: 1000 }}" alt="{{ block.settings.item_title }}">
-                            {%- else -%}
-                                {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
-                            {%- endif -%}
+                    {%- for product in collections['all'].products limit: display_limit -%}
+                        <div class="jacket-slot" data-product-handle="{{ product.handle }}">
+                            <a href="{{ product.url }}">
+                                {%- if product.featured_media != blank -%}
+                                    <img class="jacket-image" src="{{ product.featured_media | image_url: width: 800 }}" alt="{{ product.title | escape }}" loading="lazy">
+                                {%- else -%}
+                                    {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
+                                {%- endif -%}
+                            </a>
                         </div>
                     {%- endfor -%}
                 {%- endif -%}
@@ -68,13 +59,7 @@
             <div class="jacket-counter">
                 <span id="currentJacket">01</span>
                 &nbsp;/&nbsp;
-                <span id="totalJackets">
-                    {%- if section.settings.collection != blank -%}
-                        {{ section.settings.collection.products.size | default: '05' | pad_zero }}
-                    {%- else -%}
-                        {{ collections['all'].products.size | default: '05' }}
-                    {%- endif -%}
-                </span>
+                <span id="totalJackets">05</span>
             </div>
             <div class="jacket-progress">
                 <div class="jacket-progress-bar" id="progressBar"></div>
@@ -82,6 +67,9 @@
         </div>
     </div>
 </section>
+
+<!-- Link your custom GSAP horizontal scroll script file -->
+{{ 'jacket-collection.js' | asset_url | script_tag }}
 
 {% schema %}
 {
@@ -132,33 +120,9 @@
       "default": 5
     }
   ],
-  "blocks": [
-    {
-      "type": "custom_item",
-      "name": "Manual Item (Fallback)",
-      "settings": [
-        {
-          "type": "image_picker",
-          "id": "item_image",
-          "label": "Item Image"
-        },
-        {
-          "type": "text",
-          "id": "item_title",
-          "label": "Item Title",
-          "default": "Look 01"
-        }
-      ]
-    }
-  ],
   "presets": [
     {
-      "name": "Dynamic Product Showcase",
-      "blocks": [
-        { "type": "custom_item", "settings": { "item_title": "Look 01" } },
-        { "type": "custom_item", "settings": { "item_title": "Look 02" } },
-        { "type": "custom_item", "settings": { "item_title": "Look 03" } }
-      ]
+      "name": "Dynamic Product Showcase"
     }
   ]
 }

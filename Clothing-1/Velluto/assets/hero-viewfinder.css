@@ -92,6 +92,24 @@
 .hero-tile--4 { grid-area: four; }
 .hero-tile--5 { grid-area: five; }
 
+/*
+ * SINGLE IMAGE, 5 SLICES
+ * Every tile renders the SAME image at the size of the whole grid, then shifts it
+ * so only that tile's region shows. Together the tiles rebuild one 16:9 picture.
+ * --slice-w / --slice-h = grid size relative to the tile
+ * --slice-x / --slice-y = where the grid's top-left sits relative to the tile
+ *
+ * Grid map (3 x 3):
+ *   one  one  two
+ *   four five two
+ *   four three three
+ */
+.hero-tile--1 { --slice-w: 150%; --slice-h: 300%; --slice-x: 0;     --slice-y: 0; }
+.hero-tile--2 { --slice-w: 300%; --slice-h: 150%; --slice-x: -200%; --slice-y: 0; }
+.hero-tile--3 { --slice-w: 150%; --slice-h: 300%; --slice-x: -50%;  --slice-y: -200%; }
+.hero-tile--4 { --slice-w: 300%; --slice-h: 150%; --slice-x: 0;     --slice-y: -50%; }
+.hero-tile--5 { --slice-w: 300%; --slice-h: 300%; --slice-x: -100%; --slice-y: -100%; }
+
 .hero-tile__hit {
     appearance: none;
     border: 0;
@@ -131,17 +149,34 @@
     outline-offset: -6px;
 }
 
-.hero-tile__img {
+/* Clips the oversized image to the tile and takes the hover zoom from the tile centre */
+.hero-tile__media {
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: var(--tile-pos, center center);
     display: block;
+    overflow: hidden;
     transform: scale(1);
     transition: transform 320ms var(--hv-ease-hover);
     will-change: transform;
+}
+
+.hero-tile__img {
+    position: absolute;
+    width: var(--slice-w, 100%);
+    height: var(--slice-h, 100%);
+    left: var(--slice-x, 0);
+    top: var(--slice-y, 0);
+    max-width: none;
+    object-fit: cover;
+    object-position: var(--tile-pos, center center);
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.hero-tile__img--placeholder {
+    background: #e9e7e2;
+    fill: #c9c6bf;
 }
 
 .hero-tile__overlay {
@@ -169,13 +204,13 @@
 }
 
 @media (hover: hover) {
-    .hero-tile__hit:hover .hero-tile__img { transform: scale(1.025); }
+    .hero-tile__hit:hover .hero-tile__media { transform: scale(1.025); }
     .hero-tile__hit:hover .hero-tile__overlay { opacity: var(--hv-overlay-opacity); }
     .hero-tile__hit:hover .hero-tile__label { opacity: 1; transform: translateY(0); }
 }
 
-.hero-tile__hit:focus-visible .hero-tile__img,
-.hero-tile__hit.is-active .hero-tile__img {
+.hero-tile__hit:focus-visible .hero-tile__media,
+.hero-tile__hit.is-active .hero-tile__media {
     transform: scale(1.025);
 }
 
@@ -264,5 +299,5 @@
     .hero-viewfinder__stage { transform: none !important; opacity: 1 !important; }
     .hero-tile__hit { transition: opacity 200ms linear !important; transition-delay: 0ms !important; transform: none !important; filter: none !important; }
     .hero-viewfinder__grid { transition: none !important; transform: none !important; }
-    .hero-tile__img, .hero-tile__overlay, .hero-tile__label { transition-duration: 120ms !important; }
+    .hero-tile__media, .hero-tile__overlay, .hero-tile__label { transition-duration: 120ms !important; }
 }
