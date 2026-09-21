@@ -1,0 +1,165 @@
+.jacket-reveal {
+    --jr-scroll-vh: 350vh;
+    position: relative;
+    height: var(--jr-scroll-vh);
+    background: #0a0a0a;
+    isolation: isolate;
+}
+
+.jacket-reveal__pin-wrap {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: #0a0a0a;
+}
+
+.jacket-reveal__stage {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+
+
+.jacket-reveal__title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    z-index: 1;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+
+    width: max-content;
+
+    text-align: center;
+
+    font-family: "Archive", sans-serif;
+    color: #fff;
+
+    pointer-events: none;
+    white-space: nowrap;
+
+    will-change: transform;
+}
+
+.jacket-reveal__title div {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.jacket-reveal__title div:first-child {
+    font-size: clamp(80px, 12vw, 190px);
+    line-height: 0.8;
+    letter-spacing: -0.05em;
+}
+
+.jacket-reveal__title div:last-child {
+    font-size: clamp(40px, 6vw, 95px);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+
+    transform: scaleX(1.15);
+    transform-origin: center;
+}
+
+.jacket-reveal__title {
+    z-index: 1;
+}
+
+.jacket-reveal__inside {
+    z-index: 2;
+}
+
+.jacket-reveal__seam-shadow {
+    z-index: 3;
+}
+
+.jacket-reveal__half {
+    z-index: 4;
+}
+
+.jacket-reveal__inside {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transform: scale(1.05);
+    will-change: transform, opacity;
+}
+
+.jacket-reveal__inside img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+}
+
+.jacket-reveal__seam-shadow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(ellipse 22% 60% at 50% 50%,
+            rgba(0, 0, 0, 0.55) 0%,
+            rgba(0, 0, 0, 0.28) 35%,
+            rgba(0, 0, 0, 0) 70%);
+    will-change: opacity;
+}
+
+.jacket-reveal__half {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+.jacket-reveal__half img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.jacket-reveal__left {
+    left: 0;
+    transform-origin: right center;
+}
+
+.jacket-reveal__left img {
+    object-position: right center;
+}
+
+.jacket-reveal__right {
+    right: 0;
+    transform-origin: left center;
+}
+
+.jacket-reveal__right img {
+    object-position: left center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .jacket-reveal__inside,
+    .jacket-reveal__half,
+    .jacket-reveal__seam-shadow {
+        transition: none !important;
+    }
+}
+
+body.jr-pinned {
+    overflow-x: hidden;
+}

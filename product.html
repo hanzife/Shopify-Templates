@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Fieldwork Jacket</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap"
+        rel="stylesheet">
+
+    <!-- GSAP Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+    <link rel="stylesheet" href="./src/style/instagram-carousel.css">
+    <link rel="stylesheet" href="./src/style/nav-bar.css">
+
+    <style>
+        :root {
+            --ink: #111111;
+            --bone: #ffffff;
+            --bone-dim: #f9f9f9;
+            --copper: #8A4E2B;
+            --copper-deep: #5E3319;
+            --line: rgba(17, 17, 17, 0.1);
+            color-scheme: light;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bone);
+            color: var(--ink);
+            font-family: 'Source Serif 4', Georgia, serif;
+            -webkit-font-smoothing: antialiased;
+            scroll-behavior: smooth;
+        }
+
+        h1,
+        h2,
+        h3,
+        .display {
+            font-family: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+            letter-spacing: -0.01em;
+            margin: 0;
+        }
+
+        button {
+            font-family: inherit;
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+            outline: 2px solid var(--copper);
+            outline-offset: 3px;
+        }
+
+        /* ---------- HERO SECTION ---------- */
+
+        .hero-section {
+            position: relative;
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            overflow: hidden;
+            background: var(--bone);
+        }
+
+        /* ---- left: story ---- */
+        .hero-left {
+            width: 30%;
+            min-width: 280px;
+            padding: 8vh 3vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2.4rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-left .kicker {
+            font-family: 'Archivo', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--copper-deep);
+            letter-spacing: 0.02em;
+        }
+
+        .hero-left h1 {
+            font-weight: 900;
+            font-size: clamp(2.1rem, 3.2vw + 1rem, 3.6rem);
+            line-height: 1.02;
+            max-width: 11ch;
+        }
+
+        .hero-left p {
+            font-size: 1.05rem;
+            line-height: 1.65;
+            max-width: 34ch;
+            color: rgba(17, 17, 17, 0.82);
+        }
+
+        .hero-left .signoff {
+            font-size: 0.92rem;
+            font-style: italic;
+            color: rgba(17, 17, 17, 0.6);
+            border-top: 1px solid var(--line);
+            padding-top: 1.2rem;
+            max-width: 30ch;
+        }
+
+        /* ---- center: native scroll-snap gallery inside hero ---- */
+        .hero-center {
+            width: 40%;
+            height: 100vh;
+            position: relative;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            border-left: 1px solid var(--line);
+            border-right: 1px solid var(--line);
+            background: #f4f4f4;
+        }
+
+        .hero-center::-webkit-scrollbar {
+            display: none;
+        }
+
+        .image-track {
+            position: relative;
+            width: 100%;
+        }
+
+        .frame {
+            height: 100vh;
+            width: 100%;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #f4f4f4;
+        }
+
+        .frame img {
+            width: 75%;
+            height: 70vh;
+            object-fit: contain;
+            display: block;
+            user-select: none;
+        }
+
+        .progress-rail {
+            position: absolute;
+            top: 0;
+            right: 10px;
+            height: 100%;
+            width: 2px;
+            background: var(--line);
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background: var(--copper);
+            transform-origin: top;
+        }
+
+        /* ---- right: purchase panel ---- */
+        .hero-right {
+            width: 30%;
+            min-width: 280px;
+            padding: 8vh 3vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 1.6rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .product-heading .name {
+            font-family: 'Archivo', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .product-heading .variant {
+            font-size: 0.95rem;
+            color: rgba(17, 17, 17, 0.6);
+            margin-top: 0.3rem;
+        }
+
+        .price {
+            font-family: 'Archivo', sans-serif;
+            font-weight: 700;
+            font-size: 1.6rem;
+        }
+
+        .field-label {
+            font-family: 'Archivo', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 0.7rem;
+            display: block;
+        }
+
+        .size-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .size-btn {
+            flex: 1;
+            height: 46px;
+            border-radius: 8px;
+            border: 1px solid rgba(21, 18, 14, 0.2);
+            background: transparent;
+            color: var(--ink);
+            font-family: 'Archivo', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .size-btn:hover {
+            background: rgba(21, 18, 14, 0.06);
+        }
+
+        .size-btn.active {
+            background: var(--ink);
+            color: var(--bone);
+            border-color: var(--ink);
+        }
+
+        .qty-row {
+            display: inline-flex;
+            align-items: center;
+            border: 1.5px solid var(--ink);
+            border-radius: 8px;
+            overflow: hidden;
+            width: fit-content;
+        }
+
+        .qty-row button {
+            width: 40px;
+            height: 42px;
+            background: transparent;
+            border: none;
+            font-size: 1.1rem;
+            color: var(--ink);
+            cursor: pointer;
+        }
+
+        .qty-row button:hover {
+            background: rgba(17, 17, 17, 0.06);
+        }
+
+        .qty-row .qty-value {
+            width: 36px;
+            text-align: center;
+            font-family: 'Archivo', sans-serif;
+            font-weight: 700;
+        }
+
+        .add-to-cart {
+            margin-top: 0.6rem;
+            background: var(--ink);
+            color: var(--bone);
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.4rem;
+            font-family: 'Archivo', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.12s ease, background 0.15s ease;
+        }
+
+        .add-to-cart:hover {
+            background: #333;
+        }
+
+        .add-to-cart:active {
+            transform: scale(0.98);
+        }
+
+        .add-note {
+            font-size: 0.82rem;
+            color: rgba(17, 17, 17, 0.55);
+            min-height: 1.2em;
+        }
+
+        .product-grid-section {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 60px 32px;
+            background: #ffffff;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #111111;
+        }
+
+        .product-grid-section h2 {
+            font-size: 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .product-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            color: inherit;
+            background: #fff;
+        }
+
+        .product-image-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 9/14;
+            background: #f4f4f4;
+            overflow-x: auto;
+            overflow-y: hidden;
+            display: flex;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-behavior: smooth;
+        }
+
+        .product-image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+            aspect-ratio: 1 / 1.25;
+
+        }
+
+        .product-card:hover .product-image-wrapper img {
+            transform: scale(1.03);
+        }
+
+        .product-image-wrapper::-webkit-scrollbar {
+            display: none;
+            /* Hide scrollbar on Chrome/Safari */
+        }
+
+        .product-wishlist-btn {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #111;
+            z-index: 2;
+            opacity: 0.8;
+            transition: opacity 200ms ease, transform 200ms ease;
+        }
+
+        .product-wishlist-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .product-wishlist-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.5;
+        }
+
+        .product-info {
+            padding-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .product-title {
+            font-size: 13px;
+            font-weight: 400;
+            color: #111111;
+            line-height: 1.3;
+            margin: 0;
+        }
+
+        .product-price {
+            font-size: 13px;
+            font-weight: 600;
+            color: #111111;
+            margin: 0;
+        }
+
+        .product-image-track {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+        }
+
+        .product-slide-img {
+            width: 100%;
+            height: 100%;
+            flex: 0 0 100%;
+            object-fit: cover;
+            display: block;
+            scroll-snap-align: start;
+            user-select: none;
+        }
+
+        /* Wishlist heart icon button */
+        .product-wishlist-btn {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #111;
+            z-index: 2;
+            opacity: 0.8;
+            transition: opacity 200ms ease, transform 200ms ease;
+        }
+
+        .product-wishlist-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .product-wishlist-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.5;
+        }
+
+        .product-info {
+            padding-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .product-title {
+            font-size: 13px;
+            font-weight: 400;
+            color: #111111;
+            line-height: 1.3;
+            margin: 0;
+        }
+
+        .product-price {
+            font-size: 13px;
+            font-weight: 600;
+            color: #111111;
+            margin: 0;
+        }
+
+        .instagram-section {
+            position: relative;
+            width: 100%;
+            padding: 50px 0;
+            background: #fff;
+            color: #000;
+            overflow: hidden;
+        }
+
+        .instagram-header {
+            width: 100%;
+            padding: 0 42px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 40px;
+        }
+
+        .instagram-heading {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .instagram-heading h2 {
+            margin: 0;
+            font-family: "Archivo", sans-serif;
+            font-size: clamp(28px, 3vw, 46px);
+            font-weight: 800;
+            line-height: 0.9;
+            letter-spacing: -0.045em;
+            text-transform: uppercase;
+        }
+
+        .instagram-heading p {
+            margin: 0;
+            font-family: "Inter", sans-serif;
+            font-size: 13px;
+            line-height: 1.4;
+            letter-spacing: -0.01em;
+            color: rgba(0, 0, 0, 0.55);
+        }
+
+        .instagram-follow {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 50px;
+            padding: 0 24px;
+            background: #000;
+            color: #fff;
+            border: 0;
+            border-radius: 12px;
+            font-family: "Inter", sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: transform 250ms ease, background-color 250ms ease;
+        }
+
+        .instagram-follow:hover {
+            transform: translateY(-2px);
+            background: #0f6be0;
+        }
+
+        .instagram-carousel {
+            width: 100%;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        .instagram-track {
+            display: flex;
+            width: max-content;
+            gap: 10px;
+            will-change: transform;
+        }
+
+        .instagram-group {
+            display: flex;
+            flex: 0 0 auto;
+            gap: 10px;
+        }
+
+        .instagram-poster {
+            position: relative;
+            width: clamp(220px, 18vw, 320px);
+            border-radius: 18px;
+            overflow: hidden;
+            flex: 0 0 auto;
+            background: #eee;
+        }
+
+        .instagram-poster img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+            user-select: none;
+            -webkit-user-drag: none;
+            transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .instagram-poster:hover img {
+            transform: scale(1.035);
+        }
+
+        .instagram-meta {
+            position: absolute;
+            left: 12px;
+            bottom: 12px;
+            z-index: 2;
+            font-family: "Inter", sans-serif;
+            font-size: 9px;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #fff;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: opacity 250ms ease, transform 250ms ease;
+        }
+
+        .instagram-poster:hover .instagram-meta {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ---------- RESPONSIVE ---------- */
+        @media (max-width: 900px) {
+            .hero-section {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .hero-left {
+                height: auto;
+                padding: 4vh 6vw;
+                gap: 1.2rem;
+            }
+
+            .hero-left p,
+            .hero-left .signoff {
+                display: none;
+            }
+
+            .hero-center {
+                height: 50vh;
+                width: 100%;
+                border-left: none;
+                border-right: none;
+                border-top: 1px solid var(--line);
+                border-bottom: 1px solid var(--line);
+            }
+
+            .hero-right {
+                height: auto;
+                padding: 2.5vh 6vw;
+                gap: 0.8rem;
+            }
+
+            .product-grid-section {
+                min-height: auto;
+                padding: 60px 20px;
+            }
+
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .instagram-section {
+                padding: 40px 0;
+            }
+
+            .instagram-header {
+                padding: 0 20px;
+                margin-bottom: 24px;
+                align-items: flex-start;
+            }
+
+            .instagram-heading h2 {
+                font-size: 30px;
+            }
+
+            .instagram-poster {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="site-header" id="siteHeader">
+        <div class="header-left">
+            <a href="#" class="header-nav-link">Shop</a>
+            <a href="#" class="header-nav-link">About</a>
+        </div>
+
+        <a href="index.html" class="header-logo">Stich Clothing</a>
+
+        <div class="header-right">
+            <button type="button" class="header-icon-btn" aria-label="User Profile">
+                <svg viewBox="0 0 24 24">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </button>
+            <button type="button" class="header-icon-btn" aria-label="Checkout / Bag">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <section class="hero-section">
+        <div class="hero-left">
+            <span class="kicker">Fieldwork No. 04</span>
+            <h1>CUT ONCE.<br>WORN FOR YEARS.</h1>
+            <p>We start with waxed cotton canvas from a Scottish mill that has run the same looms since 1901. Every seam
+                is bar-tacked at the stress points, every button is corozo nut, not plastic. The pattern hasn't changed
+                since 1962 &mdash; there was nothing left to fix.</p>
+            <p class="signoff">Made in Fife. One jacket, cut to outlast the person wearing it.</p>
+        </div>
+
+        <div class="hero-center" id="heroCenter">
+            <div class="image-track" id="imageTrack">
+                <div class="frame">
+                    <img src="src/img/product/product1.png" alt="Fieldwork Jacket view 1" draggable="false">
+                </div>
+                <div class="frame">
+                    <img src="src/img/product/product-image1.png" alt="Fieldwork Jacket view 2" draggable="false">
+                </div>
+                <div class="frame">
+                    <img src="src/img/product/product-image2.png" alt="Fieldwork Jacket view 3" draggable="false">
+                </div>
+
+            </div>
+
+            <div class="progress-rail">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="hero-right">
+            <div class="product-heading">
+                <div class="name">Fieldwork Jacket</div>
+                <div class="variant">Waxed canvas &middot; Rust</div>
+            </div>
+
+            <div class="price">$328</div>
+
+            <div>
+                <span class="field-label">Size</span>
+                <div class="size-row" id="sizeRow">
+                    <button class="size-btn" data-size="XS">XS</button>
+                    <button class="size-btn active" data-size="S">S</button>
+                    <button class="size-btn" data-size="M">M</button>
+                    <button class="size-btn" data-size="L">L</button>
+                    <button class="size-btn" data-size="XL">XL</button>
+                </div>
+            </div>
+
+            <div>
+                <span class="field-label">Quantity</span>
+                <div class="qty-row">
+                    <button id="qtyMinus" aria-label="Decrease quantity">&minus;</button>
+                    <span class="qty-value" id="qtyValue">1</span>
+                    <button id="qtyPlus" aria-label="Increase quantity">+</button>
+                </div>
+            </div>
+
+            <button class="add-to-cart" id="addToCart">Add to cart</button>
+            <div class="add-note" id="addNote"></div>
+        </div>
+    </section>
+
+    <section class="product-grid-section">
+        <div class="product-grid">
+
+               <a href="#" class="product-card">
+                <div class="product-image-wrapper">
+                    <div class="product-image-track">
+                        <img class="product-slide-img" src="./src/img/jacket4.png"  alt="Blouson view 1"
+                            loading="lazy">
+                        <img class="product-slide-img" src="./src/img/product/product-image1.png" alt="Blouson view 2"
+                            loading="lazy">
+                        <img class="product-slide-img" src="./src/img/product/product-image2.png" alt="Blouson view 3"
+                            loading="lazy">
+                    </div>
+                    
+                </div>
+                <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                    </button>
+                <div class="product-info">
+                    <h3 class="product-title">Blouson similicuir à panneaux</h3>
+                    <p class="product-price">849.00 MAD</p>
+                </div>
+            </a>
+
+            <a href="#" class="product-card">
+                <div class="product-image-wrapper">
+                    <div class="product-image-track">
+                        <img class="product-slide-img" src="./src/img/jacket1.png"
+                            alt="T-shirt graphique STWD view 1" loading="lazy">
+                        <img class="product-slide-img" src="./src/img/product/product1-image1.png"
+                            alt="T-shirt graphique STWD view 2" loading="lazy">
+                        <img class="product-slide-img" src="./src/img/product/product1-image2.png"
+                            alt="T-shirt graphique STWD view 3" loading="lazy">
+                    </div>
+                    
+                </div>
+                <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                    </button>
+                <div class="product-info">
+                    <h3 class="product-title">T-shirt graphique STWD</h3>
+                    <p class="product-price">299.00 MAD</p>
+                </div>
+            </a>
+
+      
+            <a href="#" class="product-card">
+                <div class="product-image-wrapper">
+                    <div class="product-image-track">
+                        <img class="product-slide-img" src="./src/img/jacket3.png"
+                            alt="T-shirt graphique STWD view 1" loading="lazy">
+                        <img class="product-slide-img" src="./src/img/product/product3-image1.png"
+                            alt="T-shirt graphique STWD view 2" loading="lazy">
+                        <img class="product-slide-img" src="./src/img/product/product3-image2.png"
+                            alt="T-shirt graphique STWD view 3" loading="lazy">
+                    </div>
+                   
+                </div>
+                 <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                    </button>
+                <div class="product-info">
+                    <h3 class="product-title">T-shirt graphique STWD</h3>
+                    <p class="product-price">299.00 MAD</p>
+                </div>
+            </a>
+
+            
+         
+            <!-- Product Card 4 -->
+            <a href="#" class="product-card">
+                <div class="product-image-wrapper">
+                    <div class="product-image-track">
+                        <img class="product-slide-img" src="./src/img/jacket2.png" alt="Sweat view 1"
+                            loading="lazy">
+                        <img class="product-slide-img" src="./src/img/product/product2-image1.png" alt="Sweat view 2"
+                            loading="lazy">
+                        <img class="product-slide-img" src="./src/img/product/product2-image1.png" alt="Sweat view 3"
+                            loading="lazy">
+                    </div>
+                    
+                </div>
+                <button type="button" class="product-wishlist-btn" aria-label="Add to wishlist">
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                    </button>
+                <div class="product-info">
+                    <h3 class="product-title">Sweat à capuche zippé</h3>
+                    <p class="product-price">599.00 MAD</p>
+                </div>
+            </a>
+
+        </div>
+    </section>
+    <section class="instagram-section" id="instagramSection">
+        <div class="instagram-header">
+            <div class="instagram-heading">
+                <h2>@Hanzife</h2>
+                <p>Follow the latest looks, moments and stories.</p>
+            </div>
+            <a href="#" class="instagram-follow" aria-label="Follow us on Instagram">FOLLOW US</a>
+        </div>
+
+        <div class="instagram-carousel" id="instagramCarousel">
+            <div class="instagram-track" id="instagramTrack">
+                <!-- GROUP 01 -->
+                <div class="instagram-group">
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta1.png" alt="Instagram post 1"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta2.png" alt="Instagram post 2"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta3.png" alt="Instagram post 3"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta4.png" alt="Instagram post 4"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta5.png" alt="Instagram post 5"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta6.png" alt="Instagram post 6"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta7.png" alt="Instagram post 7"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta8.png" alt="Instagram post 8"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta1.png" alt="Instagram post 9"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                </div>
+                <!-- GROUP 02 -->
+                <div class="instagram-group">
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta2.png" alt="Instagram post 2"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta3.png" alt="Instagram post 3"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta4.png" alt="Instagram post 4"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta5.png" alt="Instagram post 5"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta6.png" alt="Instagram post 6"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta7.png" alt="Instagram post 7"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta8.png" alt="Instagram post 8"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta1.png" alt="Instagram post 9"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                    <div class="instagram-poster"><img src="./src/img/Instagram/Insta1.png" alt="Instagram post 1"
+                            draggable="false"><span class="instagram-meta">Instagram</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        (function () {
+            const heroCenter = document.getElementById('heroCenter');
+            const fill = document.getElementById('progressFill');
+
+            function updateProgress() {
+                const maxScroll = heroCenter.scrollHeight - heroCenter.clientHeight;
+                const progress = maxScroll > 0 ? heroCenter.scrollTop / maxScroll : 0;
+                fill.style.height = (progress * 100) + '%';
+            }
+
+            heroCenter.addEventListener('scroll', updateProgress, { passive: true });
+            window.addEventListener('resize', updateProgress);
+            updateProgress();
+            const track = document.querySelector("#instagramTrack");
+            const firstGroup = track.querySelector(".instagram-group");
+
+            function initCarousel() {
+                const groupWidth = firstGroup.getBoundingClientRect().width + 10;
+                gsap.set(track, { x: 0 });
+
+                gsap.to(track, {
+                    x: -groupWidth,
+                    duration: 35,
+                    ease: "none",
+                    repeat: -1,
+                    modifiers: {
+                        x: gsap.utils.unitize(x => parseFloat(x) % groupWidth)
+                    }
+                });
+            }
+
+            window.addEventListener("load", initCarousel);
+            initCarousel();
+
+            // Size picker functionality
+            const sizeButtons = document.querySelectorAll('.size-btn');
+            sizeButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    sizeButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+
+            // Quantity picker functionality
+            const qtyValue = document.getElementById('qtyValue');
+            let qty = 1;
+            document.getElementById('qtyMinus').addEventListener('click', () => {
+                qty = Math.max(1, qty - 1);
+                qtyValue.textContent = qty;
+            });
+            document.getElementById('qtyPlus').addEventListener('click', () => {
+                qty = Math.min(9, qty + 1);
+                qtyValue.textContent = qty;
+            });
+
+            // Add to cart feedback
+            const addNote = document.getElementById('addNote');
+            document.getElementById('addToCart').addEventListener('click', () => {
+                const size = document.querySelector('.size-btn.active').dataset.size;
+                addNote.textContent = 'Added ' + qty + ' \u00b7 size ' + size + ' to your cart.';
+            });
+        })();
+    </script>
+
+    <script src="./src/js/nav-bar.js"></script>
+
+</body>
+
+</html>
