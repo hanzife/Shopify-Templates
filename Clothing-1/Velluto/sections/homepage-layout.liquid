@@ -54,9 +54,125 @@
         </div>
     </section>
 
+<script>
+(function () {
+    const hero = document.querySelector('#HeroViewfinder');
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    if (!hero) return;
+
+    let isTransitioning = false;
+
+    function getFeaturedSection() {
+        /*
+         * Your homepage JSON uses:
+         * "featured_products": {
+         *   "type": "featured"
+         * }
+         *
+         * Shopify normally renders the section with an id
+         * containing "shopify-section".
+         */
+        return (
+            document.querySelector('#shopify-section-featured_products') ||
+            document.querySelector('[id*="featured_products"]')
+        );
+    }
+
+    function easeInOut(t) {
+        return t < 0.5
+            ? 4 * t * t * t
+            : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function smoothScrollTo(targetY, duration) {
+        const startY = window.scrollY;
+        const distance = targetY - startY;
+        const startTime = performance.now();
+
+        function animate(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = easeInOut(progress);
+
+            window.scrollTo(0, startY + distance * eased);
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                isTransitioning = false;
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    function goToFeatured() {
+        const featured = getFeaturedSection();
+
+        if (!featured || isTransitioning) return;
+
+        isTransitioning = true;
+
+        const targetY =
+            featured.getBoundingClientRect().top +
+            window.scrollY;
+
+        smoothScrollTo(targetY, 900);
+    }
+
+    function goToHero() {
+        if (isTransitioning) return;
+
+        isTransitioning = true;
+
+        smoothScrollTo(0, 900);
+    }
+
+    window.addEventListener('wheel', function (event) {
+        if (isTransitioning) {
+            event.preventDefault();
+            return;
+        }
+
+        const heroRect = hero.getBoundingClientRect();
+
+        const heroAtTop =
+            Math.abs(heroRect.top) < 5;
+
+        const heroVisible =
+            heroRect.bottom > 0 &&
+            heroRect.top < window.innerHeight;
+
+        if (!heroVisible) return;
+
+        /*
+         * Trackpad / mouse scrolling DOWN
+         */
+        if (event.deltaY > 0 && heroAtTop) {
+            event.preventDefault();
+            goToFeatured();
+        }
+
+        /*
+         * Scrolling UP from the Featured section
+         * back to Hero.
+         */
+        const featured = getFeaturedSection();
+
+        if (
+            event.deltaY < 0 &&
+            featured &&
+            Math.abs(featured.getBoundingClientRect().top) < 5
+        ) {
+            event.preventDefault();
+            goToHero();
+        }
+
+    }, { passive: false });
+
+})();
+</script>
+
 </div>
 
 {% schema %}

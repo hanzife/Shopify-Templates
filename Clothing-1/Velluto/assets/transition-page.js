@@ -1,6 +1,3 @@
-/* ==========================================================
-   ROBUST JACKET CLICK HANDLER & TRIANGLE TRANSITION
-   ========================================================== */
 (function () {
     'use strict';
 
@@ -19,24 +16,22 @@
 
     const triangles = overlay.querySelectorAll('.transition-triangle');
 
-    // 2. Listen for clicks on any jacket image or slot
+    // 2. Listen for clicks on any jacket slot or image link
     window.addEventListener('click', function (e) {
         const slot = e.target.closest('.jacket-slot') || e.target.closest('.jacket-image');
         if (!slot) return;
 
+        const link = slot.querySelector('a') || slot.closest('a');
+        if (!link || !link.href) return;
+
         e.preventDefault();
         e.stopPropagation();
 
-        // Find which jacket was clicked
-        const slotsArray = Array.from(document.querySelectorAll('.jacket-slot'));
-        // Find the parent slot if they clicked the image directly
-        const targetSlot = e.target.closest('.jacket-slot');
-        const jacketIndex = slotsArray.indexOf(targetSlot) + 1;
-        
-        const targetUrl = `product.html?jacket=${jacketIndex || 1}`; 
+        const targetUrl = link.href;
 
         overlay.classList.add('is-active');
 
+        // Play the triangle opening animation
         gsap.fromTo(triangles, 
             { opacity: 0, scale: 0 },
             {
@@ -49,36 +44,10 @@
                 },
                 ease: "power2.inOut",
                 onComplete: () => {
-                    fetch(targetUrl)
-                        .then(response => response.text())
-                        .then(html => {
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
-                            
-                            document.body.innerHTML = doc.body.innerHTML;
-                            window.history.pushState({}, '', targetUrl);
-                            window.scrollTo(0, 0);
-
-                            gsap.to(triangles, {
-                                opacity: 0,
-                                scale: 0,
-                                duration: 0.4,
-                                stagger: {
-                                    each: 0.003,
-                                    from: "random"
-                                },
-                                ease: "power2.inOut",
-                                onComplete: () => {
-                                    overlay.classList.remove('is-active');
-                                    location.reload();
-                                }
-                            });
-                        })
-                        .catch(err => {
-                            window.location.href = targetUrl;
-                        });
+                    // Smoothly navigate to the actual Shopify product page once animation completes
+                    window.location.href = targetUrl;
                 }
             }
         );
-    }, true); // Use capture phase to ensure it catches the click before GSAP/ScrollTrigger blocks it
+    }, true);
 })();
