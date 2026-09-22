@@ -1,6 +1,4 @@
 <div class="velluto-homepage-wrapper">
-   
-
     {%- comment -%}
         HERO VIEWFINDER
         One 16:9 image uploaded from the theme editor. Every tile shows its own
@@ -51,80 +49,11 @@
                             </li>
                         {%- endfor -%}
                     </ul>
-
-                  
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="jacket-section" id="jacketSection">
-        <div class="jacket-stage">
-            <div class="collection-label">
-                {{ section.settings.subheading | default: 'The Jacket Collection' }}
-            </div>
-
-            <div class="jacket-copy">
-                <h2>{{ section.settings.heading_text | default: 'THE JACKET<br>COLLECTION' }}</h2>
-                <p>{{ section.settings.description_text | newline_to_br | default: 'Designed for movement.<br>Built for every moment.' }}</p>
-            </div>
-
-            <div class="model-wrap">
-                {%- if section.settings.model_image != blank -%}
-                    <img class="model" src="{{ section.settings.model_image | image_url: width: 1200 }}" alt="Fashion model">
-                {%- else -%}
-                    <img class="model" src="{{ 'model.png' | asset_url }}" alt="Fashion model">
-                {%- endif -%}
-            </div>
-
-            <div class="jacket-viewport">
-                <div class="jacket-track" id="jacketTrack">
-                    {%- assign display_limit = section.settings.product_limit | default: 5 -%}
-                    
-                    {%- if section.settings.collection != blank -%}
-                        {%- for product in section.settings.collection.products limit: display_limit -%}
-                            <div class="jacket-slot" data-product-handle="{{ product.handle }}">
-                                <a href="{{ product.url }}">
-                                    {%- if product.featured_media != blank -%}
-                                        <img class="jacket-image" src="{{ product.featured_media | image_url: width: 800 }}" alt="{{ product.title | escape }}" loading="lazy">
-                                    {%- else -%}
-                                        {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
-                                    {%- endif -%}
-                                </a>
-                            </div>
-                        {%- endfor -%}
-                    {%- else -%}
-                        {%- for product in collections['all'].products limit: display_limit -%}
-                            <div class="jacket-slot" data-product-handle="{{ product.handle }}">
-                                <a href="{{ product.url }}">
-                                    {%- if product.featured_media != blank -%}
-                                        <img class="jacket-image" src="{{ product.featured_media | image_url: width: 800 }}" alt="{{ product.title | escape }}" loading="lazy">
-                                    {%- else -%}
-                                        {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
-                                    {%- endif -%}
-                                </a>
-                            </div>
-                        {%- endfor -%}
-                    {%- endif -%}
-                </div>
-            </div>
-
-            <div class="jacket-label" id="jacketLabel">
-                Jacket 01
-            </div>
-
-            <div class="jacket-ui">
-                <div class="jacket-counter">
-                    <span id="currentJacket">01</span>
-                    &nbsp;/&nbsp;
-                    05
-                </div>
-                <div class="jacket-progress">
-                    <div class="jacket-progress-bar" id="progressBar"></div>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <section class="instagram-section" id="instagramSection">
         <div class="instagram-header">
@@ -238,47 +167,6 @@
       "id": "label_5",
       "label": "Tile 5 hover label",
       "default": "Explore"
-    },
-    {
-      "type": "header",
-      "content": "Jacket Collection"
-    },
-    {
-      "type": "text",
-      "id": "subheading",
-      "label": "Subheading Label",
-      "default": "The Jacket Collection"
-    },
-    {
-      "type": "text",
-      "id": "heading_text",
-      "label": "Heading (Use <br> for line breaks)",
-      "default": "THE JACKET<br>COLLECTION"
-    },
-    {
-      "type": "textarea",
-      "id": "description_text",
-      "label": "Description Text",
-      "default": "Designed for movement.\nBuilt for every moment."
-    },
-    {
-      "type": "image_picker",
-      "id": "model_image",
-      "label": "Center Model Image"
-    },
-    {
-      "type": "collection",
-      "id": "collection",
-      "label": "Pull Products From Collection"
-    },
-    {
-      "type": "range",
-      "id": "product_limit",
-      "min": 2,
-      "max": 10,
-      "step": 1,
-      "label": "Max Products to Display",
-      "default": 5
     }
   ],
   "presets": [

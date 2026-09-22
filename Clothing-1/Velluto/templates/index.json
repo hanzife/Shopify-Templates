@@ -4,12 +4,17 @@
       "type": "homepage-layout",
       "settings": {}
     },
+    "featured_products": {
+      "type": "featured",
+      "settings": {}
+    },
     "product_showcase": {
       "type": "dynamic-product-showcase"
     }
   },
   "order": [
     "homepage",
+    "featured_products",
     "product_showcase"
   ]
 }

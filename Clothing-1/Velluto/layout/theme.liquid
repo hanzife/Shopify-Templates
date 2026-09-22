@@ -26,26 +26,22 @@
     {{ content_for_header }}
 
     {{ 'global.css' | asset_url | stylesheet_tag }}
-{{ 'hero-viewfinder.css' | asset_url | stylesheet_tag }}
-{{ 'instagram-carousel.css' | asset_url | stylesheet_tag }}
-{{ 'jacket-collection.css' | asset_url | stylesheet_tag }}
-{{ 'jacket-reveal.css' | asset_url | stylesheet_tag }}
-{{ 'transition-page.css' | asset_url | stylesheet_tag }}
+    {{ 'hero-viewfinder.css' | asset_url | stylesheet_tag }}
+    {{ 'instagram-carousel.css' | asset_url | stylesheet_tag }}
+    {{ 'jacket-reveal.css' | asset_url | stylesheet_tag }}
+    {{ 'transition-page.css' | asset_url | stylesheet_tag }}
 
   </head>
 
   <body>
-  
-
     {% section 'nav-bar' %}
     {{ content_for_layout }}
     {% sections 'footer-group' %}
 
     <script src="{{ 'editorial-hero.js' | asset_url }}" defer="defer"></script>
-<script src="{{ 'hero-viewfinder.js' | asset_url }}" defer="defer"></script>
-<script src="{{ 'instagram-carousel.js' | asset_url }}" defer="defer"></script>
-<script src="{{ 'jacket-collection.js' | asset_url }}" defer="defer"></script>
-<script src="{{ 'jacket-reveal.js' | asset_url }}" defer="defer"></script>
-<script src="{{ 'transition-page.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'hero-viewfinder.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'instagram-carousel.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'jacket-reveal.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'transition-page.js' | asset_url }}" defer="defer"></script>
   </body>
 </html>

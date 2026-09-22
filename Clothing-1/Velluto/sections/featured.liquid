@@ -1,0 +1,358 @@
+<section class="jacket-section" id="jacketSection">
+    <div class="jacket-stage">
+        <div class="collection-label">
+            {{ section.settings.subheading | default: 'The Jacket Collection' }}
+        </div>
+
+        <div class="jacket-copy">
+            <h2>{{ section.settings.heading_text | default: 'THE JACKET<br>COLLECTION' }}</h2>
+            <p>{{ section.settings.description_text | newline_to_br | default: 'Designed for movement.<br>Built for every moment.' }}</p>
+        </div>
+
+        <div class="model-wrap">
+            {%- if section.settings.model_image != blank -%}
+                <img class="model" src="{{ section.settings.model_image | image_url: width: 1200 }}" alt="Fashion model" loading="lazy">
+            {%- else -%}
+                <img class="model" src="{{ 'model.png' | asset_url }}" alt="Fashion model" loading="lazy">
+            {%- endif -%}
+        </div>
+
+        <div class="jacket-viewport">
+            <div class="jacket-track" id="jacketTrack">
+                {%- assign display_limit = section.settings.product_limit | default: 5 -%}
+                
+                {%- if section.settings.collection != blank -%}
+                    {%- for product in section.settings.collection.products limit: display_limit -%}
+                        <div class="jacket-slot" data-product-handle="{{ product.handle }}">
+                            <a href="{{ product.url }}">
+                                {%- if product.featured_media != blank -%}
+                                    <img class="jacket-image" src="{{ product.featured_media | image_url: width: 800 }}" alt="{{ product.title | escape }}" loading="lazy">
+                                {%- else -%}
+                                    {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
+                                {%- endif -%}
+                            </a>
+                        </div>
+                    {%- endfor -%}
+                {%- else -%}
+                    {%- for product in collections['all'].products limit: display_limit -%}
+                        <div class="jacket-slot" data-product-handle="{{ product.handle }}">
+                            <a href="{{ product.url }}">
+                                {%- if product.featured_media != blank -%}
+                                    <img class="jacket-image" src="{{ product.featured_media | image_url: width: 800 }}" alt="{{ product.title | escape }}" loading="lazy">
+                                {%- else -%}
+                                    {{ 'product-1' | placeholder_svg_tag: 'jacket-image' }}
+                                {%- endif -%}
+                            </a>
+                        </div>
+                    {%- endfor -%}
+                {%- endif -%}
+            </div>
+        </div>
+
+        <div class="jacket-label" id="jacketLabel">
+            Item 01
+        </div>
+
+        <div class="jacket-ui">
+            <div class="jacket-counter">
+                <span id="currentJacket">01</span>
+                &nbsp;/&nbsp;
+                {{ display_limit | prepend: '0' | slice: -2, 2 }}
+            </div>
+            <div class="jacket-progress">
+                <div class="jacket-progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.jacket-section {
+    position: relative;
+    width: 100%;
+    background: #fff;
+}
+
+.jacket-stage {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: #fff;
+}
+
+.jacket-copy {
+    position: absolute;
+    left: 42px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 260px;
+    pointer-events: none;
+}
+
+.jacket-copy h2 {
+    margin: 0 0 18px;
+    font-family: "Archivo", sans-serif;
+    font-size: clamp(32px, 3.2vw, 52px);
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+    text-transform: uppercase;
+    color: #000;
+}
+
+.jacket-copy p {
+    margin: 0;
+    font-family: "Inter", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    color: #000;
+}
+
+.model-wrap {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(35vw, 520px);
+    height: 100vh;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    pointer-events: none;
+}
+
+.model {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 90%;
+    height: auto;
+    transform: translate(-50%, -50%);
+    display: block;
+}
+
+.jacket-viewport {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(42vw, 620px);
+    height: 88vh;
+    transform: translate(-50%, -50%);
+    z-index: 30;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.jacket-track {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    will-change: transform;
+}
+
+.jacket-slot {
+    position: relative;
+    width: min(42vw, 620px);
+    height: 88vh;
+    flex: 0 0 min(42vw, 620px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.jacket-slot a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.jacket-image {
+    width: 82%;
+    height: auto;
+    max-height: 70vh;
+    object-fit: contain;
+    display: block;
+    will-change: transform, opacity, filter;
+    user-select: none;
+    transition: transform 650ms ease-out, opacity 650ms ease-out, filter 650ms ease-out;
+}
+
+.jacket-ui {
+    position: absolute;
+    left: 50%;
+    bottom: 42px;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    pointer-events: none;
+}
+
+.jacket-counter {
+    font-size: 12px;
+    letter-spacing: .12em;
+    font-weight: 500;
+    color: #111;
+    white-space: nowrap;
+}
+
+.jacket-progress {
+    width: 100px;
+    height: 1px;
+    background: rgba(0, 0, 0, .15);
+    position: relative;
+    overflow: hidden;
+}
+
+.jacket-progress-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0%;
+    height: 100%;
+    background: #111;
+}
+
+.jacket-label {
+    position: absolute;
+    left: 42px;
+    bottom: 42px;
+    z-index: 100;
+    font-size: 10px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, .55);
+    pointer-events: none;
+}
+
+.collection-label {
+    position: absolute;
+    top: 38px;
+    left: 42px;
+    z-index: 100;
+    font-size: 10px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, .45);
+    pointer-events: none;
+}
+
+@media (max-width: 900px) {
+    .model-wrap { width: 86vw; height: 78vh; }
+    .jacket-viewport { width: 72vw; height: 78vh; }
+    .jacket-slot { width: 72vw; height: 78vh; flex-basis: 72vw; }
+    .jacket-image { width: 88%; max-height: 68vh; }
+    .collection-label { left: 20px; top: 22px; }
+    .jacket-label { left: 20px; bottom: 24px; }
+    .jacket-ui { bottom: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .jacket-stage { position: relative; height: auto; min-height: 100vh; }
+    .jacket-track { position: relative; transform: none !important; }
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const section = document.querySelector("#jacketSection");
+    const track = document.querySelector("#jacketTrack");
+    const slots = document.querySelectorAll(".jacket-slot");
+    const progressBar = document.querySelector("#progressBar");
+    const currentCounter = document.querySelector("#currentJacket");
+    const jacketLabel = document.querySelector("#jacketLabel");
+
+    if (!section || !track || slots.length === 0) return;
+
+    const getScrollAmount = () => track.scrollWidth - window.innerWidth;
+
+    gsap.to(track, {
+        x: () => -getScrollAmount(),
+        ease: "none",
+        scrollTrigger: {
+            trigger: section,
+            pin: true,
+            scrub: 1,
+            end: () => "+=" + getScrollAmount(),
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+                if (progressBar) {
+                    progressBar.style.width = (self.progress * 100) + "%";
+                }
+                const index = Math.min(
+                    slots.length - 1,
+                    Math.floor(self.progress * slots.length + 0.001)
+                );
+                const currentNum = String(index + 1).padStart(2, '0');
+                if (currentCounter) currentCounter.textContent = currentNum;
+                if (jacketLabel) jacketLabel.textContent = `Item ${currentNum}`;
+            }
+        }
+    });
+});
+</script>
+
+{% schema %}
+{
+  "name": "Featured Products",
+  "class": "velluto-featured-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading Label",
+      "default": "The Jacket Collection"
+    },
+    {
+      "type": "text",
+      "id": "heading_text",
+      "label": "Heading (Use <br> for line breaks)",
+      "default": "THE JACKET<br>COLLECTION"
+    },
+    {
+      "type": "textarea",
+      "id": "description_text",
+      "label": "Description Text",
+      "default": "Designed for movement.\nBuilt for every moment."
+    },
+    {
+      "type": "image_picker",
+      "id": "model_image",
+      "label": "Center Model Image"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Pull Products From Collection",
+      "info": "If left empty, products from the 'All' collection will be used automatically."
+    },
+    {
+      "type": "range",
+      "id": "product_limit",
+      "min": 2,
+      "max": 10,
+      "step": 1,
+      "label": "Max Products to Display",
+      "default": 5
+    }
+  ],
+  "presets": [
+    {
+      "name": "Featured Products"
+    }
+  ]
+}
+{% endschema %}

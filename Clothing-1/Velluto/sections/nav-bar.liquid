@@ -1,7 +1,13 @@
 <header class="site-header" id="siteHeader">
     <div class="header-left">
-        <a href="{{ section.settings.shop_link | default: '#' }}" class="header-nav-link">{{ section.settings.shop_text | default: 'Shop' }}</a>
-        <a href="{{ section.settings.about_link | default: '#' }}" class="header-nav-link">{{ section.settings.about_text | default: 'About' }}</a>
+        <a href="{{ routes.root_url }}" class="header-nav-link desktop-only">{{ section.settings.home_text | default: 'Home' }}</a>
+        <a href="{{ routes.root_url }}#ProductGrid" class="header-nav-link desktop-only" data-smooth-scroll>{{ section.settings.products_text | default: 'Products' }}</a>
+        
+        <!-- Mobile Hamburger Trigger -->
+        <button type="button" class="header-icon-btn mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle Menu" aria-expanded="false">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
     </div>
 
     <a href="{{ routes.root_url }}" class="header-logo">{{ section.settings.logo_text | default: 'Stich Clothing' }}</a>
@@ -23,9 +29,17 @@
     </div>
 </header>
 
+<!-- Mobile Navigation Drawer Overlay -->
+<div class="mobile-nav-drawer" id="mobileNavDrawer" aria-hidden="true">
+    <div class="mobile-nav-content">
+        <a href="{{ routes.root_url }}" class="mobile-nav-link">{{ section.settings.home_text | default: 'Home' }}</a>
+        <a href="{{ routes.root_url }}#ProductGrid" class="mobile-nav-link" data-smooth-scroll>{{ section.settings.products_text | default: 'Products' }}</a>
+    </div>
+</div>
+
 <style>
 /* ==========================================================
-   APPLE-STYLE BLURRY GLASS HEADER & DYNAMIC THEME SWITCH
+   APPLE-STYLE BLURRY GLASS HEADER & MOBILE DRAWER
    ========================================================== */
 .site-header {
     position: fixed;
@@ -40,7 +54,7 @@
     z-index: 1000;
     background: transparent;
     transition: background 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease, color 0.3s ease;
-    color: #111111; /* Default text black */
+    color: #111111;
 }
 
 .site-header.is-scrolled {
@@ -110,10 +124,106 @@
     stroke-width: 1.8;
 }
 
+/* Minimalist Hamburger Button Styling */
+.mobile-menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    z-index: 1002;
+}
+
+.hamburger-line {
+    display: block;
+    width: 20px;
+    height: 1.5px;
+    background-color: currentColor;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+/* Hamburger Morph Animation when Active */
+.mobile-menu-toggle.is-active .hamburger-line:nth-child(1) {
+    transform: translateY(3.25px) rotate(45deg);
+}
+.mobile-menu-toggle.is-active .hamburger-line:nth-child(2) {
+    transform: translateY(-3.25px) rotate(-45deg);
+}
+
+/* Mobile Fullscreen Glass Drawer */
+.mobile-nav-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s ease;
+}
+
+.site-header.is-dark ~ .mobile-nav-drawer,
+.mobile-nav-drawer.is-dark-drawer {
+    background: rgba(17, 17, 17, 0.95);
+    color: #ffffff;
+}
+
+.mobile-nav-drawer.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mobile-nav-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    transform: translateY(20px) scale(0.98);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-nav-drawer.is-open .mobile-nav-content {
+    transform: translateY(0) scale(1);
+}
+
+.mobile-nav-link {
+    font-family: 'Archivo', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #111111;
+    letter-spacing: 0.04em;
+    transition: opacity 0.2s ease;
+}
+
+.mobile-nav-drawer.is-dark-drawer .mobile-nav-link {
+    color: #ffffff;
+}
+
+.mobile-nav-link:hover {
+    opacity: 0.6;
+}
+
 @media (max-width: 900px) {
     .site-header {
         padding: 0 20px;
         height: 60px;
+    }
+    .desktop-only {
+        display: none !important;
+    }
+    .mobile-menu-toggle {
+        display: inline-flex;
     }
 }
 </style>
@@ -121,6 +231,8 @@
 <script>
 (function () {
     const header = document.getElementById('siteHeader');
+    const mobileToggle = document.getElementById('mobileMenuToggle');
+    const mobileDrawer = document.getElementById('mobileNavDrawer');
     if (!header) return;
 
     // 1. Scroll Depth Glass Blur Trigger (5% or 40px)
@@ -132,7 +244,73 @@
         }
     }, { passive: true });
 
-    // 2. Precise Dark/Light Section Detector via Intersection Observer
+    // 2. Custom Smooth Ease-In-Out Scroll for Products link
+    document.querySelectorAll('a[data-smooth-scroll]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            const targetElement = document.querySelector('.product-grid-section');
+
+            if (targetElement) {
+                e.preventDefault();
+
+                // Close mobile drawer if open
+                if (mobileDrawer) {
+                    mobileDrawer.classList.remove('is-open');
+                    if (mobileToggle) {
+                        mobileToggle.classList.remove('is-active');
+                        mobileToggle.setAttribute('aria-expanded', 'false');
+                    }
+                    mobileDrawer.setAttribute('aria-hidden', 'true');
+                    document.body.style.overflow = '';
+                }
+
+                // Custom Ease-In-Out Animation parameters
+                const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - 70; // Offset for header height
+                const startPosition = window.pageYOffset;
+                const distance = targetPosition - startPosition;
+                const duration = 1000; // Duration in milliseconds (1 second for a smooth glide)
+                let startTime = null;
+
+                function easeInOutQuad(t) {
+                    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+                }
+
+                function animation(currentTime) {
+                    if (startTime === null) startTime = currentTime;
+                    const timeElapsed = currentTime - startTime;
+                    const progress = Math.min(timeElapsed / duration, 1);
+                    const ease = easeInOutQuad(progress);
+
+                    window.scrollTo(0, startPosition + (distance * ease));
+
+                    if (timeElapsed < duration) {
+                        requestAnimationFrame(animation);
+                    }
+                }
+
+                requestAnimationFrame(animation);
+            }
+        });
+    });
+
+    // 3. Mobile Menu Toggle Logic
+    if (mobileToggle && mobileDrawer) {
+        mobileToggle.addEventListener('click', () => {
+            const isOpen = mobileDrawer.classList.toggle('is-open');
+            mobileToggle.classList.toggle('is-active', isOpen);
+            mobileToggle.setAttribute('aria-expanded', isOpen);
+            mobileDrawer.setAttribute('aria-hidden', !isOpen);
+            
+            if (header.classList.contains('is-dark')) {
+                mobileDrawer.classList.add('is-dark-drawer');
+            } else {
+                mobileDrawer.classList.remove('is-dark-drawer');
+            }
+
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+        });
+    }
+
+    // 4. Precise Dark/Light Section Detector via Intersection Observer
     const darkSections = document.querySelectorAll('.jacket-reveal, [data-theme="dark"], .dark-section');
     
     if (darkSections.length > 0) {
@@ -146,8 +324,10 @@
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     header.classList.add('is-dark');
+                    if (mobileDrawer) mobileDrawer.classList.add('is-dark-drawer');
                 } else {
                     header.classList.remove('is-dark');
+                    if (mobileDrawer) mobileDrawer.classList.remove('is-dark-drawer');
                 }
             });
         }, observerOptions);
@@ -170,25 +350,15 @@
     },
     {
       "type": "text",
-      "id": "shop_text",
-      "label": "Left Nav Link 1 Text",
-      "default": "Shop"
-    },
-    {
-      "type": "url",
-      "id": "shop_link",
-      "label": "Left Nav Link 1 URL"
+      "id": "home_text",
+      "label": "Home Link Text",
+      "default": "Home"
     },
     {
       "type": "text",
-      "id": "about_text",
-      "label": "Left Nav Link 2 Text",
-      "default": "About"
-    },
-    {
-      "type": "url",
-      "id": "about_link",
-      "label": "Left Nav Link 2 URL"
+      "id": "products_text",
+      "label": "Products Link Text",
+      "default": "Products"
     }
   ],
   "presets": [
