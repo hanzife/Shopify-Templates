@@ -1,0 +1,376 @@
+<section class="jacket-reveal" id="jacketReveal">
+    <div class="jacket-reveal__pin-wrap" id="jacketRevealPinWrap">
+        <div class="jacket-reveal__stage" id="jacketRevealStage">
+            <div class="jacket-reveal__title" id="jacketRevealTitle">
+                <div>{{ section.settings.title_line_1 | default: 'STICH' }}</div>
+                <div>{{ section.settings.title_line_2 | default: 'CLOTHING' }}</div>
+            </div>
+
+            <div class="jacket-reveal__inside" id="jacketRevealInside">
+                {%- if section.settings.inside_image != blank -%}
+                    <img src="{{ section.settings.inside_image | image_url: width: 2400 }}" alt="" draggable="false">
+                {%- else -%}
+                    <img src="{{ 'inside.png' | asset_url }}" alt="" draggable="false">
+                {%- endif -%}
+            </div>
+
+            <div class="jacket-reveal__seam-shadow" id="jacketRevealShadow" aria-hidden="true"></div>
+
+            <div class="jacket-reveal__half jacket-reveal__left" id="jacketRevealLeft">
+                {%- if section.settings.left_image != blank -%}
+                    <img src="{{ section.settings.left_image | image_url: width: 1600 }}" alt="" draggable="false">
+                {%- else -%}
+                    <img src="{{ 'left.png' | asset_url }}" alt="" draggable="false">
+                {%- endif -%}
+            </div>
+
+            <div class="jacket-reveal__half jacket-reveal__right" id="jacketRevealRight">
+                {%- if section.settings.right_image != blank -%}
+                    <img src="{{ section.settings.right_image | image_url: width: 1600 }}" alt="" draggable="false">
+                {%- else -%}
+                    <img src="{{ 'right.png' | asset_url }}" alt="" draggable="false">
+                {%- endif -%}
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.jacket-reveal {
+    position: relative;
+    width: 100vw;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    height: 350vh;
+    background: #0a0a0a;
+    z-index: 10;
+}
+
+.jacket-reveal__pin-wrap {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: #0a0a0a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.jacket-reveal__stage {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.jacket-reveal__title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    width: max-content;
+    text-align: center;
+    font-family: "Archive", sans-serif;
+    color: #fff;
+    pointer-events: none;
+    white-space: nowrap;
+    will-change: transform;
+}
+
+.jacket-reveal__title div {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.jacket-reveal__title div:first-child {
+    font-size: clamp(80px, 12vw, 190px);
+    line-height: 0.8;
+    letter-spacing: -0.05em;
+}
+
+.jacket-reveal__title div:last-child {
+    font-size: clamp(40px, 6vw, 95px);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    transform: scaleX(1.15);
+    transform-origin: center;
+}
+
+.jacket-reveal__inside {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transform: scale(1.05);
+    will-change: transform, opacity;
+    z-index: 2;
+}
+
+.jacket-reveal__inside img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+}
+
+.jacket-reveal__seam-shadow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(ellipse 22% 60% at 50% 50%,
+            rgba(0, 0, 0, 0.55) 0%,
+            rgba(0, 0, 0, 0.28) 35%,
+            rgba(0, 0, 0, 0) 70%);
+    will-change: opacity;
+    z-index: 3;
+}
+
+.jacket-reveal__half {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    will-change: transform;
+    backface-visibility: hidden;
+    z-index: 4;
+}
+
+.jacket-reveal__half img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.jacket-reveal__left {
+    left: 0;
+    transform-origin: right center;
+}
+
+.jacket-reveal__left img {
+    object-position: right center;
+}
+
+.jacket-reveal__right {
+    right: 0;
+    transform-origin: left center;
+}
+
+.jacket-reveal__right img {
+    object-position: left center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .jacket-reveal {
+        height: auto;
+    }
+    .jacket-reveal__pin-wrap {
+        height: auto;
+        position: relative;
+    }
+    .jacket-reveal__inside,
+    .jacket-reveal__half,
+    .jacket-reveal__seam-shadow {
+        transition: none !important;
+    }
+}
+
+body.jr-pinned {
+    overflow-x: hidden;
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+(function () {
+    "use strict";
+
+    function initJacketReveal() {
+        var section = document.getElementById("jacketReveal");
+        if (!section || typeof gsap === "undefined" || typeof ScrollTrigger === "undefined") {
+            return;
+        }
+
+        var pinWrap = document.getElementById("jacketRevealPinWrap");
+        var leftEl = document.getElementById("jacketRevealLeft");
+        var rightEl = document.getElementById("jacketRevealRight");
+        var insideEl = document.getElementById("jacketRevealInside");
+        var shadowEl = document.getElementById("jacketRevealShadow");
+        var titleEl = document.getElementById("jacketRevealTitle");
+
+        var leftImg = leftEl.querySelector("img");
+        var rightImg = rightEl.querySelector("img");
+
+        gsap.registerPlugin(ScrollTrigger);
+
+        var TRAVEL_VW_FRACTION = 0.92;
+        var MAX_ROTATION_DEG = 1.5;
+
+        var st = null;
+        var tl = null;
+
+        function travelPx() {
+            return window.innerWidth * 0.5 * TRAVEL_VW_FRACTION;
+        }
+
+        function buildTimeline() {
+            var travel = travelPx();
+
+            tl = gsap.timeline({
+                defaults: { ease: "none" },
+                smoothChildTiming: true
+            });
+
+            tl.to(leftEl, { x: -travel, rotation: -MAX_ROTATION_DEG, scale: 0.985, duration: 100 }, 0);
+            tl.to(rightEl, { x: travel, rotation: MAX_ROTATION_DEG, scale: 0.985, duration: 100 }, 0);
+            tl.to(insideEl, { opacity: 1, scale: 1, duration: 15, ease: "power2.out" }, 5);
+            tl.to(shadowEl, { opacity: 1, duration: 5 }, 0);
+            tl.to(shadowEl, { opacity: 0, duration: 30, ease: "power2.out" }, 20);
+            tl.to(leftImg, { xPercent: -6, duration: 15 }, 85);
+            tl.to(rightImg, { xPercent: 6, duration: 15 }, 85);
+            tl.to(titleEl, { y: "-120vh", duration: 60, ease: "power2.in" }, 40);
+
+            st = ScrollTrigger.create({
+                trigger: section,
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 1,
+                pin: pinWrap,
+                pinSpacing: true,
+                anticipatePin: 1,
+                invalidateOnRefresh: true,
+                animation: tl,
+                onToggle: function (self) {
+                    document.body.classList.toggle("jr-pinned", self.isActive);
+                }
+            });
+        }
+
+        function destroyTimeline() {
+            if (st) { st.kill(); st = null; }
+            if (tl) { tl.kill(); tl = null; }
+            gsap.set([leftEl, rightEl], { clearProps: "transform" });
+            gsap.set(insideEl, { clearProps: "transform,opacity" });
+            gsap.set(shadowEl, { clearProps: "opacity" });
+        }
+
+        var resizeTimer = null;
+        function handleResize() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function () {
+                var progress = st ? st.progress : 0;
+                destroyTimeline();
+                buildTimeline();
+                if (progress > 0 && progress < 1) {
+                    st.scroll(st.start + progress * (st.end - st.start));
+                }
+                ScrollTrigger.refresh();
+            }, 150);
+        }
+
+        gsap.set(insideEl, { opacity: 0, scale: 1.05 });
+        gsap.set(shadowEl, { opacity: 0 });
+        gsap.set([leftEl, rightEl], { x: 0, rotation: 0, scale: 1 });
+
+        buildTimeline();
+        window.addEventListener("resize", handleResize);
+
+        section.__jacketReveal = {
+            destroy: function () {
+                window.removeEventListener("resize", handleResize);
+                destroyTimeline();
+            }
+        };
+    }
+
+    function preloadImages(urls) {
+        return Promise.all(
+            urls.map(function (src) {
+                return new Promise(function (resolve) {
+                    var img = new Image();
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                    img.src = src;
+                });
+            })
+        );
+    }
+
+    function start() {
+        var left = document.querySelector("#jacketRevealLeft img");
+        var right = document.querySelector("#jacketRevealRight img");
+        var inside = document.querySelector("#jacketRevealInside img");
+
+        if (!left || !right || !inside) return;
+
+        preloadImages([left.src, right.src, inside.src]).then(function () {
+            initJacketReveal();
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start);
+    } else {
+        start();
+    }
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Jacket Reveal",
+  "class": "velluto-jacket-reveal-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title_line_1",
+      "label": "Title Line 1",
+      "default": "STICH"
+    },
+    {
+      "type": "text",
+      "id": "title_line_2",
+      "label": "Title Line 2",
+      "default": "CLOTHING"
+    },
+    {
+      "type": "image_picker",
+      "id": "left_image",
+      "label": "Left Flap Image",
+      "info": "Fallback to asset left.png if empty"
+    },
+    {
+      "type": "image_picker",
+      "id": "right_image",
+      "label": "Right Flap Image",
+      "info": "Fallback to asset right.png if empty"
+    },
+    {
+      "type": "image_picker",
+      "id": "inside_image",
+      "label": "Inside Reveal Image",
+      "info": "Fallback to asset inside.png if empty"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Jacket Reveal"
+    }
+  ]
+}
+{% endschema %}

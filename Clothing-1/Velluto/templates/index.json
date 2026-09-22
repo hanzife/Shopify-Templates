@@ -8,6 +8,14 @@
       "type": "featured",
       "settings": {}
     },
+    "instagram_carousel": {
+      "type": "instagram-carousel",
+      "settings": {}
+    },
+    "jacket-reveal": {
+      "type": "jacket-reveal",
+      "settings": {}
+    },
     "product_showcase": {
       "type": "dynamic-product-showcase"
     }
@@ -15,6 +23,8 @@
   "order": [
     "homepage",
     "featured_products",
+    "instagram_carousel",
+    "jacket-reveal",
     "product_showcase"
   ]
 }
