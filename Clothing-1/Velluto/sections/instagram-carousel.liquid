@@ -1,50 +1,191 @@
+```liquid
 {%- if section.settings.show_section -%}
+
 <section class="instagram-section" id="instagramSection">
+
     <div class="instagram-header">
+
         <div class="instagram-heading">
             <h2>{{ section.settings.heading | escape }}</h2>
             <p>{{ section.settings.subheading | escape }}</p>
         </div>
+
         {%- if section.settings.button_url != blank -%}
-            <a href="{{ section.settings.button_url }}" class="instagram-follow" aria-label="Follow us on Instagram" target="_blank" rel="noopener">
+            <a
+                href="{{ section.settings.button_url }}"
+                class="instagram-follow"
+                aria-label="Follow us on Instagram"
+                target="_blank"
+                rel="noopener"
+            >
                 {{ section.settings.button_text | escape }}
             </a>
         {%- endif -%}
+
     </div>
 
-    <div class="instagram-carousel" id="instagramCarousel">
-        <div class="instagram-track" id="instagramTrack">
-            <!-- Original blocks group -->
+
+    <div class="instagram-carousel">
+
+        <div class="instagram-track">
+
+            <!-- ORIGINAL GROUP -->
             <div class="instagram-group">
-                {%- for block in section.blocks -%}
-                    <div class="instagram-poster" {{ block.shopify_attributes }}>
-                        {%- if block.settings.image != blank -%}
-                            <img src="{{ block.settings.image | image_url: width: 800 }}" alt="{{ block.settings.image.alt | escape }}" draggable="false" loading="lazy">
-                        {%- else -%}
-                            <div class="instagram-placeholder-box"><span>Post {{ forloop.index }}</span></div>
-                        {%- endif -%}
-                        <span class="instagram-meta">Instagram</span>
-                    </div>
-                {%- endfor -%}
-            </div>
-            <!-- Duplicate group for seamless infinite CSS ticker loop -->
-            <div class="instagram-group" aria-hidden="true">
-                {%- for block in section.blocks -%}
+
+                {%- for i in (1..10) -%}
+
                     <div class="instagram-poster">
-                        {%- if block.settings.image != blank -%}
-                            <img src="{{ block.settings.image | image_url: width: 800 }}" alt="" draggable="false" loading="lazy">
+
+                        {%- case i -%}
+
+                            {%- when 1 -%}
+                                {%- assign image = section.settings.instagram_1 -%}
+
+                            {%- when 2 -%}
+                                {%- assign image = section.settings.instagram_2 -%}
+
+                            {%- when 3 -%}
+                                {%- assign image = section.settings.instagram_3 -%}
+
+                            {%- when 4 -%}
+                                {%- assign image = section.settings.instagram_4 -%}
+
+                            {%- when 5 -%}
+                                {%- assign image = section.settings.instagram_5 -%}
+
+                            {%- when 6 -%}
+                                {%- assign image = section.settings.instagram_6 -%}
+
+                            {%- when 7 -%}
+                                {%- assign image = section.settings.instagram_7 -%}
+
+                            {%- when 8 -%}
+                                {%- assign image = section.settings.instagram_8 -%}
+
+                            {%- when 9 -%}
+                                {%- assign image = section.settings.instagram_9 -%}
+
+                            {%- when 10 -%}
+                                {%- assign image = section.settings.instagram_10 -%}
+
+                        {%- endcase -%}
+
+
+                        {%- if image != blank -%}
+
+                            <img
+                                src="{{ image | image_url: width: 800 }}"
+                                alt="{{ image.alt | escape }}"
+                                draggable="false"
+                                loading="{% if i <= 3 %}eager{% else %}lazy{% endif %}"
+                            >
+
                         {%- else -%}
-                            <div class="instagram-placeholder-box"><span>Post {{ forloop.index }}</span></div>
+
+                            <img
+                                src="{{ 'instagram-post.png' | asset_url }}"
+                                alt="Instagram post {{ i }}"
+                                draggable="false"
+                                loading="{% if i <= 3 %}eager{% else %}lazy{% endif %}"
+                            >
+
                         {%- endif -%}
-                        <span class="instagram-meta">Instagram</span>
+
+                        <span class="instagram-meta">
+                            Instagram
+                        </span>
+
                     </div>
+
                 {%- endfor -%}
+
             </div>
+
+
+            <!-- DUPLICATE GROUP FOR SEAMLESS LOOP -->
+            <div
+                class="instagram-group"
+                aria-hidden="true"
+            >
+
+                {%- for i in (1..10) -%}
+
+                    <div class="instagram-poster">
+
+                        {%- case i -%}
+
+                            {%- when 1 -%}
+                                {%- assign image = section.settings.instagram_1 -%}
+
+                            {%- when 2 -%}
+                                {%- assign image = section.settings.instagram_2 -%}
+
+                            {%- when 3 -%}
+                                {%- assign image = section.settings.instagram_3 -%}
+
+                            {%- when 4 -%}
+                                {%- assign image = section.settings.instagram_4 -%}
+
+                            {%- when 5 -%}
+                                {%- assign image = section.settings.instagram_5 -%}
+
+                            {%- when 6 -%}
+                                {%- assign image = section.settings.instagram_6 -%}
+
+                            {%- when 7 -%}
+                                {%- assign image = section.settings.instagram_7 -%}
+
+                            {%- when 8 -%}
+                                {%- assign image = section.settings.instagram_8 -%}
+
+                            {%- when 9 -%}
+                                {%- assign image = section.settings.instagram_9 -%}
+
+                            {%- when 10 -%}
+                                {%- assign image = section.settings.instagram_10 -%}
+
+                        {%- endcase -%}
+
+
+                        {%- if image != blank -%}
+
+                            <img
+                                src="{{ image | image_url: width: 800 }}"
+                                alt=""
+                                draggable="false"
+                                loading="lazy"
+                            >
+
+                        {%- else -%}
+
+                            <img
+                                src="{{ 'instagram-post.png' | asset_url }}"
+                                alt=""
+                                draggable="false"
+                                loading="lazy"
+                            >
+
+                        {%- endif -%}
+
+                        <span class="instagram-meta">
+                            Instagram
+                        </span>
+
+                    </div>
+
+                {%- endfor -%}
+
+            </div>
+
         </div>
+
     </div>
+
 </section>
 
+
 <style>
+
 .instagram-section {
     position: relative;
     width: 100%;
@@ -58,9 +199,11 @@
     width: 100%;
     padding: 0 42px;
     margin-bottom: 32px;
+
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
+
     gap: 40px;
 }
 
@@ -72,41 +215,55 @@
 
 .instagram-heading h2 {
     margin: 0;
+
     font-family: "Archivo", sans-serif;
     font-size: clamp(28px, 3vw, 46px);
     font-weight: 800;
+
     line-height: 0.9;
     letter-spacing: -0.045em;
+
     text-transform: uppercase;
 }
 
 .instagram-heading p {
     margin: 0;
+
     font-family: "Inter", sans-serif;
     font-size: 13px;
     line-height: 1.4;
     letter-spacing: -0.01em;
+
     color: rgba(0, 0, 0, 0.55);
 }
 
 .instagram-follow {
     flex: 0 0 auto;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
     height: 50px;
     padding: 0 24px;
+
     background: #000;
     color: #fff;
+
     border: 0;
     border-radius: 12px;
+
     font-family: "Inter", sans-serif;
     font-size: 11px;
     font-weight: 600;
+
     letter-spacing: 0.02em;
     text-transform: uppercase;
     text-decoration: none;
-    transition: transform 250ms ease, background-color 250ms ease;
+
+    transition:
+        transform 250ms ease,
+        background-color 250ms ease;
 }
 
 .instagram-follow:hover {
@@ -125,20 +282,26 @@
     display: flex;
     gap: 12px;
     width: max-content;
-    animation: infiniteScroll 40s linear infinite;
+
+    animation: instagramInfiniteScroll 40s linear infinite;
+
+    will-change: transform;
+}
+
+@keyframes instagramInfiniteScroll {
+
+    from {
+        transform: translateX(-50%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+
 }
 
 .instagram-carousel:hover .instagram-track {
     animation-play-state: paused;
-}
-
-@keyframes infiniteScroll {
-    0% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(-50%);
-    }
 }
 
 .instagram-group {
@@ -149,58 +312,62 @@
 
 .instagram-poster {
     position: relative;
+
     width: clamp(220px, 18vw, 320px);
     aspect-ratio: 4 / 5;
+
     border-radius: 18px;
     overflow: hidden;
-    flex: 0 0 auto;
-    background: #e5e5e5;
-}
 
-.instagram-placeholder-box {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #e2e2e2;
-    color: #888;
-    font-family: "Inter", sans-serif;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    flex: 0 0 auto;
+
+    background: #e5e5e5;
 }
 
 .instagram-poster img {
     width: 100%;
     height: 100%;
+
     display: block;
+
     object-fit: cover;
+
     user-select: none;
     -webkit-user-drag: none;
-    transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+
+    transition:
+        transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.instagram-poster:hover img,
-.instagram-poster:hover .instagram-placeholder-box {
+.instagram-poster:hover img {
     transform: scale(1.035);
 }
 
 .instagram-meta {
     position: absolute;
+
     left: 14px;
     bottom: 14px;
+
     z-index: 2;
+
     font-family: "Inter", sans-serif;
+
     font-size: 9px;
     font-weight: 500;
+
     letter-spacing: 0.08em;
     text-transform: uppercase;
+
     color: #fff;
+
     opacity: 0;
+
     transform: translateY(5px);
-    transition: opacity 250ms ease, transform 250ms ease;
+
+    transition:
+        opacity 250ms ease,
+        transform 250ms ease;
 }
 
 .instagram-poster:hover .instagram-meta {
@@ -209,80 +376,173 @@
 }
 
 @media (max-width: 900px) {
-    .instagram-section { padding: 40px 0; }
-    .instagram-header { padding: 0 20px; margin-bottom: 24px; align-items: flex-start; }
-    .instagram-heading h2 { font-size: 30px; }
-    .instagram-heading p { font-size: 12px; }
-    .instagram-follow { height: 38px; padding: 0 16px; font-size: 10px; }
-    .instagram-track, .instagram-group { gap: 8px; }
-    .instagram-poster { width: 160px; }
+
+    .instagram-section {
+        padding: 40px 0;
+    }
+
+    .instagram-header {
+        padding: 0 20px;
+        margin-bottom: 24px;
+        align-items: flex-start;
+    }
+
+    .instagram-heading h2 {
+        font-size: 30px;
+    }
+
+    .instagram-heading p {
+        font-size: 12px;
+    }
+
+    .instagram-follow {
+        height: 38px;
+        padding: 0 16px;
+        font-size: 10px;
+    }
+
+    .instagram-track,
+    .instagram-group {
+        gap: 8px;
+    }
+
+    .instagram-poster {
+        width: 160px;
+    }
+
 }
+
 </style>
+
 {%- endif -%}
 
+
 {% schema %}
+
 {
-  "name": "Instagram Carousel",
-  "class": "velluto-instagram-section",
-  "settings": [
-    {
-      "type": "checkbox",
-      "id": "show_section",
-      "label": "Enable Section",
-      "default": true
-    },
-    {
-      "type": "text",
-      "id": "heading",
-      "label": "Heading",
-      "default": "@Hanzife"
-    },
-    {
-      "type": "text",
-      "id": "subheading",
-      "label": "Subheading",
-      "default": "Follow the latest looks, moments and stories."
-    },
-    {
-      "type": "text",
-      "id": "button_text",
-      "label": "Button Text",
-      "default": "Follow Us"
-    },
-    {
-      "type": "url",
-      "id": "button_url",
-      "label": "Button Link URL"
-    }
-  ],
-  "blocks": [
-    {
-      "type": "instagram_post",
-      "name": "Instagram Image",
-      "settings": [
+    "name": "Instagram Carousel",
+    "class": "velluto-instagram-section",
+
+    "settings": [
+
         {
-          "type": "image_picker",
-          "id": "image",
-          "label": "Post Image",
-          "info": "Recommended aspect ratio: 4:5 vertical portrait (e.g., 1080 x 1350px)."
+            "type": "checkbox",
+            "id": "show_section",
+            "label": "Enable Section",
+            "default": true
+        },
+
+        {
+            "type": "text",
+            "id": "heading",
+            "label": "Heading",
+            "default": "@Hanzife"
+        },
+
+        {
+            "type": "text",
+            "id": "subheading",
+            "label": "Subheading",
+            "default": "Follow the latest looks, moments and stories."
+        },
+
+        {
+            "type": "text",
+            "id": "button_text",
+            "label": "Button Text",
+            "default": "Follow Us"
+        },
+
+        {
+            "type": "url",
+            "id": "button_url",
+            "label": "Button Link URL"
+        },
+
+
+        {
+            "type": "header",
+            "content": "Instagram Images"
+        },
+
+        {
+            "type": "image_picker",
+            "id": "instagram_1",
+            "label": "Instagram Image 1",
+            "info": "Leave empty to use instagram-post.png"
+        },
+
+        {
+            "type": "image_picker",
+            "id": "instagram_2",
+            "label": "Instagram Image 2",
+            "info": "Leave empty to use instagram-post.png"
+        },
+
+        {
+            "type": "image_picker",
+            "id": "instagram_3",
+            "label": "Instagram Image 3",
+            "info": "Leave empty to use instagram-post.png"
+        },
+
+        {
+            "type": "image_picker",
+            "id": "instagram_4",
+            "label": "Instagram Image 4",
+            "info": "Leave empty to use instagram-post.png"
+        },
+
+        {
+            "type": "image_picker",
+            "id": "instagram_5",
+            "label": "Instagram Image 5",
+            "info": "Leave empty to use instagram-post.png"
+        },
+
+        {
+            "type": "image_picker",
+            "id": "instagram_6",
+            "label": "Instagram Image 6",
+            "info": "Leave empty to use instagram-post.png"
+        },
+
+        {
+            "type": "image_picker",
+            "id": "instagram_7",
+            "label": "Instagram Image 7",
+            "info": "Leave empty to use instagram-post.png"
+        },
+
+        {
+            "type": "image_picker",
+            "id": "instagram_8",
+            "label": "Instagram Image 8",
+            "info": "Leave empty to use instagram-post.png"
+        },
+
+        {
+            "type": "image_picker",
+            "id": "instagram_9",
+            "label": "Instagram Image 9",
+            "info": "Leave empty to use instagram-post.png"
+        },
+
+        {
+            "type": "image_picker",
+            "id": "instagram_10",
+            "label": "Instagram Image 10",
+            "info": "Leave empty to use instagram-post.png"
         }
-      ]
-    }
-  ],
-  "presets": [
-    {
-      "name": "Instagram Carousel",
-      "blocks": [
-        { "type": "instagram_post" },
-        { "type": "instagram_post" },
-        { "type": "instagram_post" },
-        { "type": "instagram_post" },
-        { "type": "instagram_post" },
-        { "type": "instagram_post" },
-        { "type": "instagram_post" },
-        { "type": "instagram_post" }
-      ]
-    }
-  ]
+
+    ],
+
+    "presets": [
+        {
+            "name": "Instagram Carousel"
+        }
+    ]
+
 }
+
 {% endschema %}

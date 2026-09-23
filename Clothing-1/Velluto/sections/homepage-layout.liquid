@@ -54,6 +54,7 @@
         </div>
     </section>
 
+
 <script>
 (function () {
     const hero = document.querySelector('#HeroViewfinder');
@@ -62,20 +63,29 @@
 
     let isTransitioning = false;
 
-    function getFeaturedSection() {
+    function getNextSection() {
         /*
-         * Your homepage JSON uses:
-         * "featured_products": {
-         *   "type": "featured"
-         * }
-         *
-         * Shopify normally renders the section with an id
-         * containing "shopify-section".
+         * Find the Shopify section wrapper containing the Hero.
          */
-        return (
-            document.querySelector('#shopify-section-featured_products') ||
-            document.querySelector('[id*="featured_products"]')
-        );
+        const heroSection = hero.closest('[id^="shopify-section-"]');
+
+        if (!heroSection) return null;
+
+        /*
+         * The immediate next Shopify section is the destination.
+         * Do NOT search further down the page.
+         */
+        const nextSection = heroSection.nextElementSibling;
+
+        if (
+            nextSection &&
+            nextSection.id &&
+            nextSection.id.startsWith('shopify-section-')
+        ) {
+            return nextSection;
+        }
+
+        return null;
     }
 
     function easeInOut(t) {
@@ -94,7 +104,10 @@
             const progress = Math.min(elapsed / duration, 1);
             const eased = easeInOut(progress);
 
-            window.scrollTo(0, startY + distance * eased);
+            window.scrollTo(
+                0,
+                startY + distance * eased
+            );
 
             if (progress < 1) {
                 requestAnimationFrame(animate);
@@ -106,15 +119,15 @@
         requestAnimationFrame(animate);
     }
 
-    function goToFeatured() {
-        const featured = getFeaturedSection();
+    function goToNextSection() {
+        const nextSection = getNextSection();
 
-        if (!featured || isTransitioning) return;
+        if (!nextSection || isTransitioning) return;
 
         isTransitioning = true;
 
         const targetY =
-            featured.getBoundingClientRect().top +
+            nextSection.getBoundingClientRect().top +
             window.scrollY;
 
         smoothScrollTo(targetY, 900);
@@ -129,6 +142,7 @@
     }
 
     window.addEventListener('wheel', function (event) {
+
         if (isTransitioning) {
             event.preventDefault();
             return;
@@ -139,30 +153,27 @@
         const heroAtTop =
             Math.abs(heroRect.top) < 5;
 
-        const heroVisible =
-            heroRect.bottom > 0 &&
-            heroRect.top < window.innerHeight;
-
-        if (!heroVisible) return;
-
         /*
-         * Trackpad / mouse scrolling DOWN
+         * HERO -> IMMEDIATE NEXT SECTION
          */
-        if (event.deltaY > 0 && heroAtTop) {
+        if (
+            event.deltaY > 0 &&
+            heroAtTop
+        ) {
             event.preventDefault();
-            goToFeatured();
+            goToNextSection();
+            return;
         }
 
         /*
-         * Scrolling UP from the Featured section
-         * back to Hero.
+         * IMMEDIATE NEXT SECTION -> HERO
          */
-        const featured = getFeaturedSection();
+        const nextSection = getNextSection();
 
         if (
             event.deltaY < 0 &&
-            featured &&
-            Math.abs(featured.getBoundingClientRect().top) < 5
+            nextSection &&
+            Math.abs(nextSection.getBoundingClientRect().top) < 5
         ) {
             event.preventDefault();
             goToHero();
