@@ -70,7 +70,6 @@
 .jacket-section {
     position: relative;
     width: 100%;
-    /* height: 500vh; -> REMOVED so JS handles height dynamically */
     background: #fff;
 }
 
@@ -88,7 +87,8 @@
     top: 50%;
     transform: translateY(-50%);
     z-index: 10;
-    width: 260px;
+    width: 33.333%; 
+    max-width: 420px;
     pointer-events: none;
 }
 
@@ -142,7 +142,7 @@
     height: 88vh;
     transform: translate(-50%, -50%);
     z-index: 30;
-    pointer-events: none;
+    pointer-events: auto;
     overflow: visible;
 }
 
@@ -180,7 +180,6 @@
     max-height: 70vh;
     object-fit: contain;
     display: block;
-    will-change: transform, opacity, filter;
     user-select: none;
     transition: transform 650ms ease-out, opacity 650ms ease-out, filter 650ms ease-out;
 }
@@ -246,32 +245,132 @@
     pointer-events: none;
 }
 
+/* ---------- Mobile Layout Fixes ---------- */
 @media (max-width: 900px) {
-    .model-wrap { width: 86vw; height: 78vh; }
-    .jacket-viewport { width: 72vw; height: 78vh; }
-    .jacket-slot { width: 72vw; height: 78vh; flex-basis: 72vw; }
-    .jacket-image { width: 88%; max-height: 68vh; }
-    .collection-label { left: 20px; top: 22px; }
-    .jacket-label { left: 20px; bottom: 24px; }
-    .jacket-ui { bottom: 24px; }
-}
+    .jacket-section {
+        height: 100vh !important;
+    }
+    
+    .jacket-stage {
+        position: relative;
+        height: 100vh;
+        overflow: hidden;
+    }
 
-@media (prefers-reduced-motion: reduce) {
-    .jacket-section { height: auto; }
-    .jacket-stage { position: relative; height: auto; min-height: 100vh; }
-    .jacket-track { position: relative; transform: none !important; }
+    .jacket-copy {
+        position: absolute;
+        top: 50px;
+        left: 20px;
+        transform: none;
+        width: calc(100% - 40px);
+        text-align: left;
+        z-index: 40;
+    }
+
+    .jacket-copy h2 {
+        font-size: 22px;
+        margin-bottom: 4px;
+    }
+
+    .jacket-copy p {
+        font-size: 12px;
+    }
+
+    .collection-label {
+        top: 24px;
+        left: 20px;
+    }
+
+    /* Model container perfectly centered in background */
+    .model-wrap {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform: none;
+        z-index: 15;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+    }
+    
+    .model {
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none;
+        max-height: 55vh;
+        width: 80vw;
+        object-fit: contain;
+    }
+
+    /* Interactive horizontal scroll viewport precisely layered over the model */
+    .jacket-viewport {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transform: none;
+        z-index: 25;
+        overflow-x: scroll;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x pan-y;
+        scrollbar-width: none;
+    }
+
+    .jacket-viewport::-webkit-scrollbar {
+        display: none;
+    }
+
+    .jacket-track {
+        position: relative;
+        height: 100%;
+        transform: none !important;
+        display: flex;
+        width: max-content;
+        align-items: center;
+    }
+
+    .jacket-slot {
+        width: 100vw;
+        height: 100vh;
+        flex: 0 0 100vw;
+        scroll-snap-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .jacket-image {
+        max-height: 55vh;
+        width: 80vw;
+        object-fit: contain;
+        transition: transform 0.15s ease-out, opacity 0.15s ease-out;
+    }
+
+    .jacket-label {
+        display: none;
+    }
+
+    .jacket-ui {
+        position: absolute;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 50;
+    }
 }
 </style>
 
-<!-- Make sure GSAP and ScrollTrigger are loaded in your theme layout (theme.liquid) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
 <script>
 (function () {
-    if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
-    gsap.registerPlugin(ScrollTrigger);
-
+    const isMobile = window.innerWidth <= 900;
     const section = document.querySelector("#jacketSection");
     const track = document.querySelector("#jacketTrack");
     const jackets = gsap.utils.toArray(".jacket-image");
@@ -279,183 +378,170 @@
     const totalJackets = document.querySelector("#totalJackets");
     const jacketLabel = document.querySelector("#jacketLabel");
     const progressBar = document.querySelector("#progressBar");
+    const slots = gsap.utils.toArray(".jacket-slot");
 
-    function createJacketExperience() {
-        const slots = gsap.utils.toArray(".jacket-slot");
-        if (!slots.length) return;
+    if (!slots.length) return;
+    const COUNT = slots.length;
 
-        const COUNT = slots.length;
+    if (totalJackets) {
+        totalJackets.textContent = String(COUNT).padStart(2, "0");
+    }
+
+    // --- MOBILE: Native Horizontal Touch Swipe & Parallax Scale over Model ---
+    if (isMobile) {
+        const viewport = document.querySelector("#jacketViewport");
         
-        if (totalJackets) {
-            totalJackets.textContent = String(COUNT).padStart(2, "0");
-        }
+        jackets.forEach((img, i) => {
+            img.style.opacity = i === 0 ? 1 : 0.2;
+            img.style.transform = i === 0 ? 'scale(1)' : 'scale(0.92)';
+        });
 
-        // Dynamically compute container scroll height precisely based on actual item count
-        const scrollDurationMultiplier = Math.max(1, COUNT - 1) * 100;
-        section.style.height = `${100 + scrollDurationMultiplier}vh`;
+        viewport.addEventListener("scroll", () => {
+            const scrollLeft = viewport.scrollLeft;
+            const slotWidth = window.innerWidth;
+            const index = Math.round(scrollLeft / slotWidth);
+            const clampedIndex = Math.max(0, Math.min(index, COUNT - 1));
 
-        let currentIndex = 0;
-        let isAnimating = false;
-        let wheelLocked = false;
-        let wheelReleaseTimer = null;
+            if (currentJacket) currentJacket.textContent = String(clampedIndex + 1).padStart(2, "0");
+            if (progressBar) progressBar.style.width = `${(clampedIndex / Math.max(1, COUNT - 1)) * 100}%`;
 
-        const TRANSITION_DURATION = 0.9;
-        const WHEEL_THRESHOLD = 12;
-        const RELEASE_DELAY = 180;
+            jackets.forEach((img, i) => {
+                const itemLeft = i * slotWidth;
+                const distance = Math.abs(scrollLeft - itemLeft) / slotWidth;
+                const scale = Math.max(0.92, 1 - (distance * 0.08));
+                const opacity = Math.max(0.2, 1 - (distance * 0.75));
+                
+                img.style.transform = `scale(${scale})`;
+                img.style.opacity = opacity;
+            });
+        }, { passive: true });
+        
+        return;
+    }
 
-        function getSlotWidth() {
-            return slots[0].getBoundingClientRect().width;
-        }
+    // --- DESKTOP: GSAP Pinned Experience ---
+    if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+    gsap.registerPlugin(ScrollTrigger);
 
-        function updateUI(index) {
-            const number = String(index + 1).padStart(2, "0");
-            if (currentJacket) currentJacket.textContent = number;
-            if (jacketLabel) jacketLabel.textContent = `Jacket ${number}`;
+    const scrollDurationMultiplier = Math.max(1, COUNT - 1) * 100;
+    section.style.height = `${100 + scrollDurationMultiplier}vh`;
 
-            gsap.to(progressBar, {
-                width: `${(index / Math.max(1, COUNT - 1)) * 100}%`,
-                duration: 0.45,
+    let currentIndex = 0;
+    let isAnimating = false;
+    let wheelLocked = false;
+    let wheelReleaseTimer = null;
+
+    const TRANSITION_DURATION = 0.9;
+    const WHEEL_THRESHOLD = 12;
+    const RELEASE_DELAY = 180;
+
+    function getSlotWidth() {
+        return slots[0].getBoundingClientRect().width;
+    }
+
+    function updateUI(index) {
+        const number = String(index + 1).padStart(2, "0");
+        if (currentJacket) currentJacket.textContent = number;
+        if (jacketLabel) jacketLabel.textContent = `Jacket ${number}`;
+
+        gsap.to(progressBar, {
+            width: `${(index / Math.max(1, COUNT - 1)) * 100}%`,
+            duration: 0.45,
+            ease: "power2.out",
+            overwrite: true
+        });
+    }
+
+    function updateJacketStates(index, animate = true) {
+        jackets.forEach((jacket, i) => {
+            const active = i === index;
+            gsap.to(jacket, {
+                opacity: active ? 1 : 0.18,
+                scale: active ? 1 : 0.94,
+                duration: animate ? 0.65 : 0,
                 ease: "power2.out",
                 overwrite: true
             });
-        }
-
-        function updateJacketStates(index, animate = true) {
-            jackets.forEach((jacket, i) => {
-                const active = i === index;
-                gsap.to(jacket, {
-                    opacity: active ? 1 : 0.18,
-                    scale: active ? 1 : 0.94,
-                    duration: animate ? 0.65 : 0,
-                    ease: "power2.out",
-                    overwrite: true
-                });
-            });
-        }
-
-        function positionJacket(index, animate = true) {
-            const x = -(getSlotWidth() * index);
-
-            if (!animate) {
-                gsap.set(track, { x });
-                updateJacketStates(index, false);
-                updateUI(index);
-                return;
-            }
-
-            isAnimating = true;
-
-            gsap.timeline({
-                defaults: { overwrite: "auto" },
-                onComplete: () => {
-                    isAnimating = false;
-                    clearTimeout(wheelReleaseTimer);
-                    wheelReleaseTimer = setTimeout(() => {
-                        wheelLocked = false;
-                    }, RELEASE_DELAY);
-                }
-            })
-            .to(track, { x, duration: TRANSITION_DURATION, ease: "power3.inOut" }, 0)
-            .to(progressBar, { width: `${(index / Math.max(1, COUNT - 1)) * 100}%`, duration: 0.7, ease: "power2.out" }, 0.1);
-
-            updateJacketStates(index, true);
-            currentIndex = index;
-            if (currentJacket) currentJacket.textContent = String(index + 1).padStart(2, "0");
-            if (jacketLabel) jacketLabel.textContent = `Jacket ${String(index + 1).padStart(2, "0")}`;
-        }
-
-        const trigger = ScrollTrigger.create({
-            trigger: section,
-            start: "top top",
-            end: `+=${scrollDurationMultiplier}%`,
-            pin: ".jacket-stage",
-            pinSpacing: true,
-            anticipatePin: 1,
-            invalidateOnRefresh: true,
-            onEnter: () => { if (!isAnimating) positionJacket(0, false); },
-            onEnterBack: () => { if (!isAnimating) positionJacket(COUNT - 1, false); }
-        });
-
-        function handleWheel(event) {
-            if (!trigger.isActive) return;
-            const delta = event.deltaY;
-            if (Math.abs(delta) < WHEEL_THRESHOLD) return;
-
-            if ((currentIndex === 0 && delta < 0) || (currentIndex === COUNT - 1 && delta > 0)) {
-                return;
-            }
-
-            event.preventDefault();
-            if (isAnimating || wheelLocked) return;
-            wheelLocked = true;
-
-            const direction = delta > 0 ? 1 : -1;
-            const nextIndex = currentIndex + direction;
-
-            if (nextIndex < 0 || nextIndex >= COUNT) {
-                wheelLocked = false;
-                return;
-            }
-
-            const progress = nextIndex / Math.max(1, COUNT - 1);
-            const scrollPosition = trigger.start + (trigger.end - trigger.start) * progress;
-
-            window.scrollTo({ top: scrollPosition, behavior: "instant" });
-            positionJacket(nextIndex, true);
-        }
-
-        window.addEventListener("wheel", handleWheel, { passive: false });
-
-        window.addEventListener("resize", () => {
-            if (isAnimating) return;
-            gsap.set(track, { x: -(getSlotWidth() * currentIndex) });
-        });
-
-        positionJacket(0, false);
-    }
-
-    function entranceAnimation() {
-        gsap.fromTo(".model-wrap", { opacity: 0, y: 35 }, {
-            opacity: 1, y: 0, duration: 1.2, ease: "power3.out",
-            scrollTrigger: { trigger: section, start: "top 85%", once: true }
-        });
-
-        gsap.fromTo(".collection-label", { opacity: 0, y: 10 }, {
-            opacity: 1, y: 0, duration: 1, delay: .15, ease: "power3.out",
-            scrollTrigger: { trigger: section, start: "top 85%", once: true }
         });
     }
 
-    function init() {
-        createJacketExperience();
-        entranceAnimation();
-        ScrollTrigger.refresh();
-    }
+    function positionJacket(index, animate = true) {
+        const x = -(getSlotWidth() * index);
 
-    const images = document.querySelectorAll(".jacket-image, .model");
-    let loaded = 0;
+        if (!animate) {
+            gsap.set(track, { x });
+            updateJacketStates(index, false);
+            updateUI(index);
+            return;
+        }
 
-    if (images.length === 0) {
-        init();
-    } else {
-        images.forEach(img => {
-            if (img.complete) {
-                loaded++;
-                if (loaded === images.length) init();
-            } else {
-                img.addEventListener("load", () => {
-                    loaded++;
-                    if (loaded === images.length) init();
-                }, { once: true });
+        isAnimating = true;
+
+        gsap.timeline({
+            defaults: { overwrite: "auto" },
+            onComplete: () => {
+                isAnimating = false;
+                clearTimeout(wheelReleaseTimer);
+                wheelReleaseTimer = setTimeout(() => { wheelLocked = false; }, RELEASE_DELAY);
             }
-        });
+        })
+        .to(track, { x, duration: TRANSITION_DURATION, ease: "power3.inOut" }, 0)
+        .to(progressBar, { width: `${(index / Math.max(1, COUNT - 1)) * 100}%`, duration: 0.7, ease: "power2.out" }, 0.1);
+
+        updateJacketStates(index, true);
+        currentIndex = index;
+        if (currentJacket) currentJacket.textContent = String(index + 1).padStart(2, "0");
+        if (jacketLabel) jacketLabel.textContent = `Jacket ${String(index + 1).padStart(2, "0")}`;
     }
 
-    let resizeTimer;
-    window.addEventListener("resize", () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => { ScrollTrigger.refresh(); }, 250);
+    const trigger = ScrollTrigger.create({
+        trigger: section,
+        start: "top top",
+        end: `+=${scrollDurationMultiplier}%`,
+        pin: ".jacket-stage",
+        pinSpacing: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onEnter: () => { if (!isAnimating) positionJacket(0, false); },
+        onEnterBack: () => { if (!isAnimating) positionJacket(COUNT - 1, false); }
     });
+
+    function handleWheel(event) {
+        if (!trigger.isActive) return;
+        const delta = event.deltaY;
+        if (Math.abs(delta) < WHEEL_THRESHOLD) return;
+
+        if ((currentIndex === 0 && delta < 0) || (currentIndex === COUNT - 1 && delta > 0)) {
+            return;
+        }
+
+        event.preventDefault();
+        if (isAnimating || wheelLocked) return;
+        wheelLocked = true;
+
+        const direction = delta > 0 ? 1 : -1;
+        const nextIndex = currentIndex + direction;
+
+        if (nextIndex < 0 || nextIndex >= COUNT) {
+            wheelLocked = false;
+            return;
+        }
+
+        const progress = nextIndex / Math.max(1, COUNT - 1);
+        const scrollPosition = trigger.start + (trigger.end - trigger.start) * progress;
+
+        window.scrollTo({ top: scrollPosition, behavior: "instant" });
+        positionJacket(nextIndex, true);
+    }
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("resize", () => {
+        if (isAnimating) return;
+        gsap.set(track, { x: -(getSlotWidth() * currentIndex) });
+    });
+
+    positionJacket(0, false);
+    ScrollTrigger.refresh();
 })();
 </script>
 

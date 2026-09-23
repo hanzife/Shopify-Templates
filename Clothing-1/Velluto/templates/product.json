@@ -8,6 +8,10 @@
       "type": "dynamic-product-showcase",
       "settings": {}
     },
+    "instagram_carousel": {
+      "type": "instagram-carousel",
+      "settings": {}
+    },
     "product_hero": {
       "type": "product-hero",
       "settings": {}
@@ -16,6 +20,7 @@
   "order": [
     "main",
     "product_hero",
+    "instagram_carousel",
     "product_showcase"
   ]
 }

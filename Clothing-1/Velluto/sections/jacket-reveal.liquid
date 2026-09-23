@@ -6,6 +6,14 @@
                 <div>{{ section.settings.title_line_2 | default: 'CLOTHING' }}</div>
             </div>
 
+            <!-- About Us text overlay on top of inside.png -->
+            <div class="jacket-reveal__about" id="jacketRevealAbout">
+                <span class="jacket-reveal__about-subtitle">{{ section.settings.about_subtitle | default: 'about us' }}</span>
+                <p class="jacket-reveal__about-text" id="jacketRevealAboutText">
+                    {{ section.settings.about_text | default: 'We create thoughtful essentials where modern design, conscious choices, and effortless beauty come together.' }}
+                </p>
+            </div>
+
             <div class="jacket-reveal__inside" id="jacketRevealInside">
                 {%- if section.settings.inside_image != blank -%}
                     <img src="{{ section.settings.inside_image | image_url: width: 2400 }}" alt="" draggable="false">
@@ -43,7 +51,7 @@
     right: 50%;
     margin-left: -50vw;
     margin-right: -50vw;
-    height: 350vh;
+    height: 400vh;
     background: #0a0a0a;
     z-index: 10;
 }
@@ -84,7 +92,7 @@
     color: #fff;
     pointer-events: none;
     white-space: nowrap;
-    will-change: transform;
+    will-change: transform, opacity;
 }
 
 .jacket-reveal__title div {
@@ -105,6 +113,45 @@
     letter-spacing: 0.02em;
     transform: scaleX(1.15);
     transform-origin: center;
+}
+
+/* About Us Overlay on top of inside.png */
+.jacket-reveal__about {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    width: min(85%, 900px);
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    will-change: opacity;
+}
+
+.jacket-reveal__about-subtitle {
+    display: block;
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 0.25em;
+    text-transform: lowercase; /* set to lowercase as requested */
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 16px;
+}
+
+.jacket-reveal__about-text {
+    font-family: "Archivo", sans-serif;
+    font-weight: 700;
+    font-size: clamp(24px, 3.8vw, 48px);
+    line-height: 1.25;
+    color: #ffffff;
+    margin: 0;
+}
+
+.jacket-reveal__about-text .char-span {
+    display: inline-block;
+    opacity: 0.2; /* Starts at 20% dim opacity */
+    will-change: opacity;
 }
 
 .jacket-reveal__inside {
@@ -184,8 +231,13 @@
     }
     .jacket-reveal__inside,
     .jacket-reveal__half,
-    .jacket-reveal__seam-shadow {
+    .jacket-reveal__seam-shadow,
+    .jacket-reveal__about {
         transition: none !important;
+        opacity: 1 !important;
+    }
+    .jacket-reveal__about-text .char-span {
+        opacity: 1 !important;
     }
 }
 
@@ -212,9 +264,24 @@ body.jr-pinned {
         var insideEl = document.getElementById("jacketRevealInside");
         var shadowEl = document.getElementById("jacketRevealShadow");
         var titleEl = document.getElementById("jacketRevealTitle");
+        var aboutEl = document.getElementById("jacketRevealAbout");
+        var aboutTextEl = document.getElementById("jacketRevealAboutText");
 
         var leftImg = leftEl.querySelector("img");
         var rightImg = rightEl.querySelector("img");
+
+        // Split paragraph text into individual character spans for letter-by-letter scrub
+        if (aboutTextEl && !aboutTextEl.dataset.splitDone) {
+            var rawText = aboutTextEl.textContent.trim();
+            aboutTextEl.innerHTML = rawText.split("").map(function(char) {
+                if (char === " ") {
+                    return '<span class="char-span">&nbsp;</span>';
+                }
+                return '<span class="char-span">' + char + '</span>';
+            }).join('');
+            aboutTextEl.dataset.splitDone = "true";
+        }
+        var charSpans = aboutTextEl ? aboutTextEl.querySelectorAll(".char-span") : [];
 
         gsap.registerPlugin(ScrollTrigger);
 
@@ -236,14 +303,34 @@ body.jr-pinned {
                 smoothChildTiming: true
             });
 
-            tl.to(leftEl, { x: -travel, rotation: -MAX_ROTATION_DEG, scale: 0.985, duration: 100 }, 0);
-            tl.to(rightEl, { x: travel, rotation: MAX_ROTATION_DEG, scale: 0.985, duration: 100 }, 0);
-            tl.to(insideEl, { opacity: 1, scale: 1, duration: 15, ease: "power2.out" }, 5);
+            // 1. Initial jacket flap opening & shadow
+            tl.to(leftEl, { x: -travel, rotation: -MAX_ROTATION_DEG, scale: 0.985, duration: 40 }, 0);
+            tl.to(rightEl, { x: travel, rotation: MAX_ROTATION_DEG, scale: 0.985, duration: 40 }, 0);
             tl.to(shadowEl, { opacity: 1, duration: 5 }, 0);
-            tl.to(shadowEl, { opacity: 0, duration: 30, ease: "power2.out" }, 20);
-            tl.to(leftImg, { xPercent: -6, duration: 15 }, 85);
-            tl.to(rightImg, { xPercent: 6, duration: 15 }, 85);
-            tl.to(titleEl, { y: "-120vh", duration: 60, ease: "power2.in" }, 40);
+            tl.to(shadowEl, { opacity: 0, duration: 20 }, 10);
+
+            // 2. Inside image fades in smoothly
+            tl.to(insideEl, { opacity: 1, scale: 1, duration: 20, ease: "power2.out" }, 10);
+
+            // 3. Title fades out / moves up
+            tl.to(titleEl, { y: "-60vh", opacity: 0, duration: 25, ease: "power2.in" }, 15);
+
+            // 4. About container becomes visible
+            tl.to(aboutEl, { opacity: 1, duration: 10 }, 25);
+
+            // 5. Letter-by-letter opacity scrub (20% -> 100%) following the scroll till the end
+            if (charSpans.length > 0) {
+                tl.to(charSpans, {
+                    opacity: 1,
+                    stagger: 0.25,
+                    duration: 45,
+                    ease: "none"
+                }, 28);
+            }
+
+            // 6. Final parallax push on jacket flaps
+            tl.to(leftImg, { xPercent: -5, duration: 25 }, 75);
+            tl.to(rightImg, { xPercent: 5, duration: 25 }, 75);
 
             st = ScrollTrigger.create({
                 trigger: section,
@@ -267,6 +354,11 @@ body.jr-pinned {
             gsap.set([leftEl, rightEl], { clearProps: "transform" });
             gsap.set(insideEl, { clearProps: "transform,opacity" });
             gsap.set(shadowEl, { clearProps: "opacity" });
+            gsap.set(titleEl, { clearProps: "transform,opacity" });
+            gsap.set(aboutEl, { clearProps: "opacity" });
+            if (charSpans.length) {
+                gsap.set(charSpans, { clearProps: "opacity" });
+            }
         }
 
         var resizeTimer = null;
@@ -286,6 +378,7 @@ body.jr-pinned {
         gsap.set(insideEl, { opacity: 0, scale: 1.05 });
         gsap.set(shadowEl, { opacity: 0 });
         gsap.set([leftEl, rightEl], { x: 0, rotation: 0, scale: 1 });
+        gsap.set(aboutEl, { opacity: 0 });
 
         buildTimeline();
         window.addEventListener("resize", handleResize);
@@ -347,6 +440,18 @@ body.jr-pinned {
       "id": "title_line_2",
       "label": "Title Line 2",
       "default": "CLOTHING"
+    },
+    {
+      "type": "text",
+      "id": "about_subtitle",
+      "label": "About Subtitle",
+      "default": "about us"
+    },
+    {
+      "type": "textarea",
+      "id": "about_text",
+      "label": "About Text",
+      "default": "We create thoughtful essentials where modern design, conscious choices, and effortless beauty come together."
     },
     {
       "type": "image_picker",
