@@ -1,52 +1,384 @@
-{% comment %}
-  This section is used in the product template to render product page with
-  media, content, and add-to-cart form.
+{{ 'section-fieldwork-product.css' | asset_url | stylesheet_tag }}
 
-  https://shopify.dev/docs/storefronts/themes/architecture/templates/product
-{% endcomment %}
+{%- assign current_variant = product.selected_or_first_available_variant -%}
 
-<div class="product-images">
-  {% for image in product.images %}
-    {% render 'image', class: 'product-image', image: image %}
-  {% endfor %}
-</div>
+<section class="hero-section" data-section-id="{{ section.id }}">
+    <!-- LEFT COLUMN: Story / Description -->
+    <div class="hero-left">
+        <span class="kicker">{{ section.settings.kicker | default: "Fieldwork No. 04" }}</span>
+        <h1>{{ product.title | escape }}</h1>
+        <div class="product-description-content">
+            {{ product.description }}
+        </div>
+        <p class="signoff">{{ section.settings.signoff | default: "Made in Fife. One jacket, cut to outlast the person wearing it." }}</p>
+    </div>
 
-<div class="product-info">
-  <h1>{{ product.title }}</h1>
-  <p>{{ product.price | money }}</p>
-  <p>{{ product.description }}</p>
-</div>
+    <!-- CENTER COLUMN: Dynamic Media Track -->
+    <div class="hero-center" id="heroCenter-{{ section.id }}">
+        <div class="image-track" id="imageTrack-{{ section.id }}">
+            {%- if product.images.size > 0 -%}
+                {%- for image in product.images -%}
+                    <div class="frame">
+                        {% render 'image', class: 'product-image', image: image %}
+                    </div>
+                {%- endfor -%}
+            {%- else -%}
+                <div class="frame">
+                    <img src="{{ 'product1.png' | asset_url }}" alt="{{ product.title | escape }}" draggable="false">
+                </div>
+            {%- endif -%}
+        </div>
 
-<div class="product-form">
-  {% form 'product', product %}
-    {% assign current_variant = product.selected_or_first_available_variant %}
+        <div class="progress-rail">
+            <div class="progress-fill" id="progressFill-{{ section.id }}"></div>
+        </div>
+    </div>
 
-    <select name="id">
-      {% for variant in product.variants %}
-        <option
-          value="{{ variant.id }}"
-          {% if variant == current_variant %}
-            selected="selected"
-          {% endif %}
-        >
-          {{ variant.title }} - {{ variant.price | money }}
-        </option>
-      {% endfor %}
-    </select>
+    <!-- RIGHT COLUMN: Purchase Form & Controls -->
+    <div class="hero-right">
+        {% form 'product', product, class: "product-form-container" %}
+            <div class="product-heading">
+                <div class="name">{{ product.title }}</div>
+                <div class="variant">
+                    {%- if product.variants.size > 1 -%}
+                        {{ current_variant.title }}
+                    {%- else -%}
+                        {{ product.vendor }}
+                    {%- endif -%}
+                </div>
+            </div>
 
-    <input type="text" name="quantity" min="1" value="1">
+            <div class="price" id="price-{{ section.id }}">{{ current_variant.price | money }}</div>
 
-    <input type="submit" value="Add to cart">
-    {{ form | payment_button }}
-  {% endform %}
-</div>
+            <!-- Native Variant Select Dropdown (Required for Shopify Cart) -->
+            <div class="field-container" style="margin-bottom: 1rem;">
+                <span class="field-label">Options / Variants</span>
+                <select name="id" id="variant-select-{{ section.id }}" class="variant-select-dropdown" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(17,17,17,0.2); background: transparent; font-family: inherit;">
+                    {% for variant in product.variants %}
+                        <option
+                            value="{{ variant.id }}"
+                            data-price="{{ variant.price | money }}"
+                            data-title="{{ variant.title }}"
+                            {% if variant == current_variant %}
+                                selected="selected"
+                            {% endif %}
+                        >
+                            {{ variant.title }} - {{ variant.price | money }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Quantity Input -->
+            <div class="field-container" style="margin-bottom: 1rem;">
+                <span class="field-label">Quantity</span>
+                <div class="qty-row">
+                    <input type="text" name="quantity" min="1" value="1" class="qty-text-input" style="width: 80px; padding: 10px; border-radius: 8px; border: 1.5px solid var(--ink); text-align: center; font-family: inherit; font-weight: 700;">
+                </div>
+            </div>
+
+            <!-- Add to Cart & Dynamic Checkout Buttons -->
+            <div class="button-group" style="display: flex; flex-direction: column; gap: 10px;">
+                <input type="submit" name="add" value="Add to cart" class="add-to-cart" style="cursor: pointer;">
+                {{ form | payment_button }}
+            </div>
+
+            <div class="add-note" id="addNote-{{ section.id }}"></div>
+        {% endform %}
+    </div>
+</section>
+
+<style>
+    :root {
+        --ink: #111111;
+        --bone: #ffffff;
+        --bone-dim: #f9f9f9;
+        --copper: #8A4E2B;
+        --copper-deep: #5E3319;
+        --line: rgba(17, 17, 17, 0.1);
+        color-scheme: light;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    h1, h2, h3, .display {
+        font-family: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+        letter-spacing: -0.01em;
+        margin: 0;
+    }
+
+    button, input, select {
+        font-family: inherit;
+    }
+
+    /* ---------- HERO SECTION ---------- */
+    .hero-section {
+        position: relative;
+        height: 100vh;
+        width: 100%;
+        display: flex;
+        overflow: hidden;
+        background: var(--bone);
+    }
+
+    .hero-left {
+        width: 30%;
+        min-width: 280px;
+        padding: 8vh 3vw;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 2.4rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-left .kicker {
+        font-family: 'Archivo', sans-serif;
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: var(--copper-deep);
+        letter-spacing: 0.02em;
+    }
+
+    .hero-left h1 {
+        font-weight: 900;
+        font-size: clamp(2.1rem, 3.2vw + 1rem, 3.6rem);
+        line-height: 1.02;
+        max-width: 11ch;
+    }
+
+    .hero-left .product-description-content p, 
+    .hero-left .product-description-content {
+        font-size: 1.05rem;
+        line-height: 1.65;
+        max-width: 34ch;
+        color: rgba(17, 17, 17, 0.82);
+    }
+
+    .hero-left .signoff {
+        font-size: 0.92rem;
+        font-style: italic;
+        color: rgba(17, 17, 17, 0.6);
+        border-top: 1px solid var(--line);
+        padding-top: 1.2rem;
+        max-width: 30ch;
+    }
+
+    .hero-center {
+        width: 40%;
+        height: 100vh;
+        position: relative;
+        overflow-y: auto;
+        scroll-snap-type: y mandatory;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        border-left: 1px solid var(--line);
+        border-right: 1px solid var(--line);
+        background: #f4f4f4;
+    }
+
+    .hero-center::-webkit-scrollbar {
+        display: none;
+    }
+
+    .image-track {
+        position: relative;
+        width: 100%;
+    }
+
+    .frame {
+        height: 100vh;
+        width: 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: #f4f4f4;
+    }
+
+    .frame .product-image, .frame img {
+        width: 75%;
+        height: 70vh;
+        object-fit: contain;
+        display: block;
+        user-select: none;
+    }
+
+    .progress-rail {
+        position: absolute;
+        top: 0;
+        right: 10px;
+        height: 100%;
+        width: 2px;
+        background: var(--line);
+        z-index: 3;
+        pointer-events: none;
+    }
+
+    .progress-fill {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 0%;
+        background: var(--copper);
+        transform-origin: top;
+    }
+
+    .hero-right {
+        width: 30%;
+        min-width: 280px;
+        padding: 8vh 3vw;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 1.6rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .product-heading .name {
+        font-family: 'Archivo', sans-serif;
+        font-weight: 700;
+        font-size: 1.5rem;
+    }
+
+    .product-heading .variant {
+        font-size: 0.95rem;
+        color: rgba(17, 17, 17, 0.6);
+        margin-top: 0.3rem;
+    }
+
+    .price {
+        font-family: 'Archivo', sans-serif;
+        font-weight: 700;
+        font-size: 1.6rem;
+    }
+
+    .field-label {
+        font-family: 'Archivo', sans-serif;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .add-to-cart {
+        margin-top: 0.6rem;
+        background: var(--ink);
+        color: var(--bone);
+        border: none;
+        border-radius: 12px;
+        padding: 1rem 1.4rem;
+        font-family: 'Archivo', sans-serif;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        width: 100%;
+        transition: transform 0.12s ease, background 0.15s ease;
+    }
+
+    .add-to-cart:hover {
+        background: #333;
+    }
+
+    .add-to-cart:active {
+        transform: scale(0.98);
+    }
+
+    @media (max-width: 900px) {
+        .hero-section {
+            flex-direction: column;
+            height: auto;
+        }
+
+        .hero-left {
+            height: auto;
+            padding: 4vh 6vw;
+            gap: 1.2rem;
+        }
+
+        .hero-left .product-description-content, .hero-left .signoff {
+            display: none;
+        }
+
+        .hero-center {
+            height: 50vh;
+            width: 100%;
+            border-left: none;
+            border-right: none;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .hero-right {
+            height: auto;
+            padding: 2.5vh 6vw;
+            gap: 0.8rem;
+        }
+    }
+</style>
+
+<script>
+    (function () {
+        const heroCenter = document.getElementById('heroCenter-{{ section.id }}');
+        const fill = document.getElementById('progressFill-{{ section.id }}');
+
+        if (heroCenter && fill) {
+            function updateProgress() {
+                const maxScroll = heroCenter.scrollHeight - heroCenter.clientHeight;
+                const progress = maxScroll > 0 ? heroCenter.scrollTop / maxScroll : 0;
+                fill.style.height = (progress * 100) + '%';
+            }
+
+            heroCenter.addEventListener('scroll', updateProgress, { passive: true });
+            window.addEventListener('resize', updateProgress);
+            updateProgress();
+        }
+
+        // Real-time price updates when selecting variant options from the dropdown
+        const variantSelect = document.getElementById('variant-select-{{ section.id }}');
+        const priceElement = document.getElementById('price-{{ section.id }}');
+
+        if (variantSelect && priceElement) {
+            variantSelect.addEventListener('change', function() {
+                const selectedOption = variantSelect.options[variantSelect.selectedIndex];
+                const newPrice = selectedOption.getAttribute('data-price');
+                if (newPrice) {
+                    priceElement.textContent = newPrice;
+                }
+            });
+        }
+    })();
+</script>
 
 {% schema %}
 {
-  "name": "t:general.product",
-  "settings": [],
-  "disabled_on": {
-    "groups": ["header", "footer"]
-  }
+  "name": "Product Hero Template",
+  "settings": [
+    {
+      "type": "text",
+      "id": "kicker",
+      "label": "Kicker text",
+      "default": "Fieldwork No. 04"
+    },
+    {
+      "type": "text",
+      "id": "signoff",
+      "label": "Sign-off text",
+      "default": "Made in Fife. One jacket, cut to outlast the person wearing it."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Hero Template"
+    }
+  ]
 }
 {% endschema %}
