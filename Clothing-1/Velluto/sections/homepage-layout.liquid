@@ -5,14 +5,26 @@
         slice of that same image, so the 5 tiles rebuild the full picture.
     {%- endcomment -%}
     {%- assign hero_image = section.settings.hero_image -%}
-    {%- if hero_image != blank -%}
-        {%- assign hero_pos = hero_image.presentation.focal_point | default: '50% 50%' -%}
-        {%- capture hero_srcset -%}
+    
+    {%- capture hero_srcset -%}
+        {%- if hero_image != blank -%}
             {{ hero_image | image_url: width: 1200 }} 1200w,
             {{ hero_image | image_url: width: 1800 }} 1800w
             {%- if hero_image.width >= 2400 -%}, {{ hero_image | image_url: width: 2400 }} 2400w{%- endif -%}
             {%- if hero_image.width >= 3200 -%}, {{ hero_image | image_url: width: 3200 }} 3200w{%- endif -%}
-        {%- endcapture -%}
+        {%- else -%}
+            {{ 'hero.png' | asset_url }} 1200w,
+            {{ 'hero.png' | asset_url }} 1800w,
+            {{ 'hero.png' | asset_url }} 2400w
+        {%- endif -%}
+    {%- endcapture -%}
+
+    {%- assign hero_pos = hero_image.presentation.focal_point | default: '50% 50%' -%}
+
+    {%- if hero_image != blank -%}
+        {%- assign hero_src = hero_image | image_url: width: 2400 -%}
+    {%- else -%}
+        {%- assign hero_src = 'hero.png' | asset_url -%}
     {%- endif -%}
 
     <section class="hero-viewfinder" id="HeroViewfinder" data-hero-viewfinder aria-label="Collection preview">
@@ -26,22 +38,18 @@
                             <li class="hero-tile hero-tile--{{ i }}" data-hero-tile data-index="{{ forloop.index0 }}">
                                 <button type="button" class="hero-tile__hit" data-hero-tile-hit aria-label="{{ tile_label | escape }}">
                                     <span class="hero-tile__media">
-                                        {%- if hero_image != blank -%}
-                                            <img
-                                                class="hero-tile__img"
-                                                data-hero-tile-img
-                                                src="{{ hero_image | image_url: width: 2400 }}"
-                                                srcset="{{ hero_srcset | strip_newlines }}"
-                                                sizes="100vw"
-                                                alt=""
-                                                style="--tile-pos: {{ hero_pos }};"
-                                                draggable="false"
-                                                loading="eager"
-                                                {% if i == 1 %}fetchpriority="high"{% endif %}
-                                            >
-                                        {%- else -%}
-                                            {{ 'hero-apparel-1' | placeholder_svg_tag: 'hero-tile__img hero-tile__img--placeholder' }}
-                                        {%- endif -%}
+                                        <img
+                                            class="hero-tile__img"
+                                            data-hero-tile-img
+                                            src="{{ hero_src }}"
+                                            srcset="{{ hero_srcset | strip_newlines }}"
+                                            sizes="100vw"
+                                            alt=""
+                                            style="--tile-pos: {{ hero_pos }};"
+                                            draggable="false"
+                                            loading="eager"
+                                            {% if i == 1 %}fetchpriority="high"{% endif %}
+                                        >
                                     </span>
                                     <span class="hero-tile__overlay" aria-hidden="true"></span>
                                     <span class="hero-tile__label" data-hero-tile-label aria-hidden="true">{{ tile_label }}</span>

@@ -38,7 +38,7 @@
   height: 100vh;
   min-height: 700px;
   width: 100%;
-  max-width: 1600px; /* Keeps layout clean on 16" laptops & ultra-wides */
+  max-width: 1600px;
   margin: 0 auto;
   display: flex;
   overflow: hidden;
@@ -173,6 +173,11 @@
   position: relative;
   z-index: 2;
   gap: 20px;
+}
+
+/* Desktop product heading style (hidden on desktop right column, shown on mobile) */
+.hero-right .product-heading {
+  display: none;
 }
 
 .product-heading .name {
@@ -314,15 +319,11 @@
 
 /* ---------- RESPONSIVE ---------- */
 
-/* Tablet / small laptop: same 3-column layout, tighter type */
 @media (max-width: 1024px) {
   .hero-left h1 { font-size: clamp(2rem, 2.5vw + 1rem, 3rem); }
 }
 
-/* Mobile: single column. We keep the exact same markup — .hero-left,
-   .hero-right and #productForm are simply "unwrapped" with display:contents
-   so their children can be individually reordered as direct flex items of
-   .hero-section. No duplicated content, no JS/Liquid changes. */
+/* Mobile: single column layout with reordered elements */
 @media (max-width: 900px) {
   .hero-section {
     display: flex;
@@ -343,15 +344,13 @@
     padding: 7vw 6vw 0;
   }
 
+  /* Hide the large title on mobile */
   .hero-left h1 {
-    order: 2;
-    max-width: 100%;
-    padding: 0 6vw;
-    font-size: clamp(1.9rem, 7vw, 2.6rem);
+    display: none;
   }
 
   .hero-center {
-    order: 3;
+    order: 2;
     width: 100%;
     height: 55vh;
     min-height: 380px;
@@ -383,33 +382,32 @@
 
   .progress-rail { display: none; }
 
+  /* Show and position the product heading title right above price on mobile */
   .hero-right .product-heading {
-    order: 4;
+    display: block;
+    order: 3;
     padding: 6vw 6vw 0;
   }
 
   .hero-right .price {
-    order: 5;
+    order: 4;
     padding: 0 6vw;
   }
 
   #productForm input[type="hidden"] { order: 0; }
 
   .option-block {
-    order: 6;
+    order: 5;
     padding: 4vw 6vw 0;
   }
 
-  /* Quantity sits right after size on mobile */
   .qty-block {
-    order: 7;
+    order: 6;
     padding: 0 6vw;
   }
 
-  /* Description + sign-off, hidden on mobile before, now shown
-     directly after quantity as requested */
   .hero-desc {
-    order: 8;
+    order: 7;
     display: block;
     max-width: 100%;
     padding: 6vw 6vw 0;
@@ -417,7 +415,7 @@
   }
 
   .signoff {
-    order: 9;
+    order: 8;
     display: block;
     max-width: 100%;
     padding: 4vw 6vw 6vw;
@@ -425,20 +423,18 @@
   }
 
   .add-to-cart {
-    order: 10;
+    order: 9;
     margin: 2vw 6vw 0;
     width: calc(100% - 12vw);
   }
 
   .add-note {
-    order: 11;
+    order: 10;
     padding: 2vw 6vw 8vw;
   }
 }
 
-/* Small phones: tighten type and controls further */
 @media (max-width: 480px) {
-  .hero-left h1 { font-size: 1.7rem; }
   .price { font-size: 1.3rem; }
   .size-btn { min-width: 40px; height: 42px; font-size: 0.82rem; }
   .add-to-cart { padding: 0.9rem 1.2rem; }
@@ -906,7 +902,6 @@
       });
     }
 
-    /* Prefill the badge/total quietly on load, without opening the drawer */
     fetch('/cart.js', { headers: { 'Accept': 'application/json' } })
       .then(function (res) { return res.json(); })
       .then(function (cart) { fwRenderDrawer(cart); })
