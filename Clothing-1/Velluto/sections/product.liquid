@@ -175,7 +175,7 @@
   gap: 20px;
 }
 
-/* Desktop product heading style (hidden on desktop right column, shown on mobile) */
+/* Desktop product heading style */
 .hero-right .product-heading {
   display: none;
 }
@@ -204,6 +204,63 @@
   font-size: 1rem;
   color: rgba(17, 17, 17, 0.45);
   margin-left: 0.5rem;
+}
+
+/* Color Swatches Styles */
+.color-picker-block {
+  margin-top: 0.5rem;
+}
+
+.color-title {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 0.6rem;
+}
+
+.color-swatch-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.color-swatch-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  padding: 2px;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.color-swatch-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.color-swatch-btn .color-fallback-dot {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  background: #ccc;
+  display: block;
+}
+
+.color-swatch-btn:hover {
+  border-color: rgba(17, 17, 17, 0.3);
+}
+
+.color-swatch-btn.active {
+  border-color: var(--ink);
+  outline: 1px solid var(--ink);
 }
 
 .field-label {
@@ -323,7 +380,6 @@
   .hero-left h1 { font-size: clamp(2rem, 2.5vw + 1rem, 3rem); }
 }
 
-/* Mobile: single column layout with reordered elements */
 @media (max-width: 900px) {
   .hero-section {
     display: flex;
@@ -344,7 +400,6 @@
     padding: 7vw 6vw 0;
   }
 
-  /* Hide the large title on mobile */
   .hero-left h1 {
     display: none;
   }
@@ -382,7 +437,6 @@
 
   .progress-rail { display: none; }
 
-  /* Show and position the product heading title right above price on mobile */
   .hero-right .product-heading {
     display: block;
     order: 3;
@@ -394,20 +448,25 @@
     padding: 0 6vw;
   }
 
+  .color-picker-block {
+    order: 5;
+    padding: 2vw 6vw 0;
+  }
+
   #productForm input[type="hidden"] { order: 0; }
 
   .option-block {
-    order: 5;
-    padding: 4vw 6vw 0;
+    order: 6;
+    padding: 2vw 6vw 0;
   }
 
   .qty-block {
-    order: 6;
+    order: 7;
     padding: 0 6vw;
   }
 
   .hero-desc {
-    order: 7;
+    order: 8;
     display: block;
     max-width: 100%;
     padding: 6vw 6vw 0;
@@ -415,7 +474,7 @@
   }
 
   .signoff {
-    order: 8;
+    order: 9;
     display: block;
     max-width: 100%;
     padding: 4vw 6vw 6vw;
@@ -423,13 +482,13 @@
   }
 
   .add-to-cart {
-    order: 9;
+    order: 10;
     margin: 2vw 6vw 0;
     width: calc(100% - 12vw);
   }
 
   .add-note {
-    order: 10;
+    order: 11;
     padding: 2vw 6vw 8vw;
   }
 }
@@ -641,9 +700,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link
-  href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap"
-  rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap" rel="stylesheet">
 
 {%- assign current_variant = product.selected_or_first_available_variant -%}
 {%- liquid
@@ -667,7 +724,7 @@
     {%- if display_category != blank -%}
       <span class="kicker">{{ display_category }}</span>
     {%- endif -%}
-    <h1>{{ product.title | upcase }}</h1>
+    <h1 style="font-size: {{ section.settings.title_size }}px;">{{ product.title | upcase }}</h1>
     <div class="hero-desc">{{ product.description }}</div>
     <p class="signoff">{{ section.settings.signoff | default: "Made in Fife. One jacket, cut to outlast the person wearing it." }}</p>
   </div>
@@ -675,7 +732,7 @@
   <div class="hero-center" id="heroCenter">
     <div class="image-track" id="imageTrack">
       {%- for image in product.images -%}
-        <div class="frame">
+        <div class="frame" data-image-id="{{ image.id }}" data-index="{{ forloop.index0 }}">
           <img
             src="{{ image | image_url: width: 1200 }}"
             srcset="{{ image | image_url: width: 600 }} 600w, {{ image | image_url: width: 1200 }} 1200w"
@@ -709,6 +766,44 @@
         <s class="price-compare">{{ current_variant.compare_at_price | money }}</s>
       {%- endif -%}
     </div>
+
+    <!-- COLOR VARIANT PICKER (Placed right below price) -->
+    {%- for option in product.options_with_values -%}
+      {%- assign downcased_option = option.name | downcase -%}
+      {%- if downcased_option contains 'color' or downcased_option contains 'colour' -%}
+        <div class="color-picker-block">
+          <div class="color-title">Color: <span id="selectedColorLabel">{{ option.selected_value }}</span></div>
+          <div class="color-swatch-row" id="colorSwatchRow">
+            {%- for value in option.values -%}
+              {%- liquid
+                assign matched_variant = nil
+                for variant in product.variants
+                  if variant.options contains value
+                    assign matched_variant = variant
+                    break
+                  endif
+                endfor
+              -%}
+              <button
+                type="button"
+                class="color-swatch-btn{% if option.selected_value == value %} active{% endif %}"
+                data-color-value="{{ value | escape }}"
+                data-variant-id="{{ matched_variant.id }}"
+                data-image-id="{{ matched_variant.featured_image.id }}"
+                data-price="{{ matched_variant.price | money }}"
+                data-compare-price="{% if matched_variant.compare_at_price > matched_variant.price %}{{ matched_variant.compare_at_price | money }}{% endif %}"
+                aria-label="{{ value | escape }}">
+                {%- if matched_variant.featured_image != blank -%}
+                  <img src="{{ matched_variant.featured_image | image_url: width: 120, height: 120, crop: 'center' }}" alt="{{ value | escape }}" loading="lazy">
+                {%- else -%}
+                  <span class="color-fallback-dot"></span>
+                {%- endif -%}
+              </button>
+            {%- endfor -%}
+          </div>
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
 
     <form method="post" action="/cart/add" id="productForm" data-product-form>
       <input type="hidden" name="id" id="variantId" value="{{ current_variant.id }}">
@@ -791,6 +886,45 @@
 
     var section = document.querySelector('[data-product-section]');
     if (!section) return;
+
+    /* ---------- Color Variant Switching & Gallery Sync ---------- */
+    var colorSwatches = section.querySelectorAll('.color-swatch-btn');
+    var selectedColorLabel = document.getElementById('selectedColorLabel');
+    var variantIdInput = document.getElementById('variantId');
+    var priceValueEl = document.getElementById('priceValue');
+    var variantLabelEl = document.getElementById('variantLabel');
+
+    colorSwatches.forEach(function (swatch) {
+      swatch.addEventListener('click', function () {
+        colorSwatches.forEach(function (btn) { btn.classList.remove('active'); });
+        swatch.classList.add('active');
+
+        var colorValue = swatch.getAttribute('data-color-value');
+        var variantId = swatch.getAttribute('data-variant-id');
+        var imageId = swatch.getAttribute('data-image-id');
+        var price = swatch.getAttribute('data-price');
+        var comparePrice = swatch.getAttribute('data-compare-price');
+
+        if (selectedColorLabel) selectedColorLabel.textContent = colorValue;
+        if (variantIdInput) variantIdInput.value = variantId;
+        if (variantLabelEl) variantLabelEl.textContent = colorValue;
+
+        if (priceValueEl && price) {
+          var priceHtml = price;
+          if (comparePrice) {
+            priceHtml += ' <s class="price-compare">' + comparePrice + '</s>';
+          }
+          priceValueEl.innerHTML = priceHtml;
+        }
+
+        if (imageId && heroCenter) {
+          var targetFrame = heroCenter.querySelector('[data-image-id="' + imageId + '"]');
+          if (targetFrame) {
+            targetFrame.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      });
+    });
 
     /* ---------- Cart drawer ---------- */
     var drawerOverlay = document.getElementById('fwCartDrawerOverlay');
@@ -907,10 +1041,7 @@
       .then(function (cart) { fwRenderDrawer(cart); })
       .catch(function () {});
 
-    var productJsonEl = document.getElementById('productJson-{{ section.id }}');
-    var productData = productJsonEl ? JSON.parse(productJsonEl.textContent) : null;
     var form = section.querySelector('[data-product-form]');
-    var variantIdInput = document.getElementById('variantId');
     var addBtn = document.getElementById('addToCart');
     var addNote = document.getElementById('addNote');
 
@@ -985,7 +1116,17 @@
   "tag": "section",
   "settings": [
     { "type": "text", "id": "kicker", "label": "Kicker text (defaults to product category)" },
-    { "type": "textarea", "id": "signoff", "label": "Sign-off line", "default": "Made in Fife. One jacket, cut to outlast the person wearing it." }
+    { "type": "textarea", "id": "signoff", "label": "Sign-off line", "default": "Made in Fife. One jacket, cut to outlast the person wearing it." },
+    {
+      "type": "range",
+      "id": "title_size",
+      "min": 18,
+      "max": 72,
+      "step": 2,
+      "unit": "px",
+      "label": "Title Font Size",
+      "default": 48
+    }
   ],
   "presets": [
     { "name": "Fieldwork product page" }
