@@ -1,32 +1,35 @@
 <header class="site-header" id="siteHeader">
-    <div class="header-left">
-        <a href="{{ routes.root_url }}" class="header-nav-link desktop-only">{{ section.settings.home_text | default: 'Home' }}</a>
-        
-        <!-- Products Link Trigger -->
-        <div class="mega-menu-trigger desktop-only" id="megaMenuTrigger">
-            <a href="{{ routes.all_products_collection_url }}" class="header-nav-link">{{ section.settings.products_text | default: 'Products' }}</a>
+    <!-- Navbar Content Layer with blend mode -->
+    <div class="site-header-inner">
+        <div class="header-left">
+            <a href="{{ routes.root_url }}" class="header-nav-link desktop-only">{{ section.settings.home_text | default: 'Home' }}</a>
+            
+            <!-- Products Link Trigger -->
+            <div class="mega-menu-trigger desktop-only" id="megaMenuTrigger">
+                <a href="{{ routes.all_products_collection_url }}" class="header-nav-link">{{ section.settings.products_text | default: 'Products' }}</a>
+            </div>
+            
+            <!-- Mobile Hamburger Trigger -->
+            <button type="button" class="header-icon-btn mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle Menu" aria-expanded="false">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
         </div>
-        
-        <!-- Mobile Hamburger Trigger -->
-        <button type="button" class="header-icon-btn mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle Menu" aria-expanded="false">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-        </button>
+
+        <a href="{{ routes.root_url }}" class="header-logo">{{ section.settings.logo_text | default: 'Stich Clothing' }}</a>
+
+        <div class="header-right">
+            <a href="{{ routes.cart_url }}" class="header-icon-btn" aria-label="Cart / Bag">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+            </a>
+        </div>
     </div>
 
-    <a href="{{ routes.root_url }}" class="header-logo">{{ section.settings.logo_text | default: 'Stich Clothing' }}</a>
-
-    <div class="header-right">
-        <a href="{{ routes.cart_url }}" class="header-icon-btn" aria-label="Cart / Bag">
-            <svg viewBox="0 0 24 24">
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <path d="M16 10a4 4 0 0 1-8 0"></path>
-            </svg>
-        </a>
-    </div>
-
-    <!-- 100% Full-Width Mega Menu Dropdown -->
+    <!-- Dropdown Menu Layer (completely isolated from blend mode) -->
     <div class="mega-menu-dropdown" id="megaMenuDropdown">
         <div class="mega-menu-container">
             {% for collection in collections %}
@@ -61,7 +64,7 @@
 
 <style>
 /* ==========================================================
-   APPLE-STYLE BLURRY GLASS HEADER & MOBILE DRAWER
+   HEADER MAIN CONTAINER & COLOR DYNAMICS
    ========================================================== */
 .site-header {
     position: fixed;
@@ -69,34 +72,50 @@
     left: 0;
     width: 100%;
     height: 70px;
-    padding: 0 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     z-index: 1000;
     background: transparent;
     transition: background 0.3s ease, backdrop-filter 0.3s ease;
     overflow: visible !important;
-    
-    color: #ffffff;
+}
+
+.site-header-inner {
+    width: 100%;
+    height: 100%;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #111111; /* Default to dark text for light pages */
+    transition: color 0.3s ease;
+}
+
+/* Dark Hero / Overlays Mode */
+.site-header.is-dark-hero .site-header-inner,
+.site-header.is-dark .site-header-inner {
+    color: #ffffff !important;
     mix-blend-mode: difference;
 }
 
+/* Scrolled State */
 .site-header.is-scrolled {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(16px) saturate(180%);
     -webkit-backdrop-filter: blur(16px) saturate(180%);
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-    color: #111111;
-    mix-blend-mode: normal;
 }
 
-.site-header.is-dark {
-    color: #ffffff !important;
+.site-header.is-scrolled .site-header-inner {
+    color: #111111 !important;
+    mix-blend-mode: normal !important;
 }
+
 .site-header.is-scrolled.is-dark {
-    background: rgba(17, 17, 17, 0.75);
+    background: rgba(17, 17, 17, 0.95);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.site-header.is-scrolled.is-dark .site-header-inner {
+    color: #ffffff !important;
 }
 
 .header-left, .header-right {
@@ -156,35 +175,46 @@
     stroke-width: 1.8;
 }
 
+.site-header.mega-menu-open {
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.site-header.mega-menu-open .site-header-inner {
+    color: #111111 !important;
+    mix-blend-mode: normal !important;
+}
+
+/* Ensure dropdown integrates seamlessly without gaps */
+.site-header.mega-menu-open .mega-menu-dropdown {
+    border-top: none;
+}
+
 /* ==========================================================
-   FULL-WIDTH SLIDE-DOWN MEGA MENU
+   DROPDOWN MENU (OPAQUE WHITE BG, ISOLATED FROM BLEND MODE)
    ========================================================== */
+
 .mega-menu-dropdown {
     position: absolute;
     top: 100%;
     left: 0;
     width: 100vw;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: #ffffff !important;
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-    padding: 32px 0; /* Vertical padding only; horizontal padding handled by container */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    padding: 40px 0;
     
-    transform: translateY(-20px);
+    transform: translateY(-10px);
     opacity: 0;
     visibility: hidden;
-    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease, visibility 0.3s ease;
+    transition: transform 0.25s ease, opacity 0.2s ease, visibility 0.2s ease;
     pointer-events: none;
-    color: #111111;
-    mix-blend-mode: normal;
+    
+    color: #111111 !important;
+    mix-blend-mode: normal !important;
     z-index: 998;
-}
-
-.site-header.is-dark .mega-menu-dropdown {
-    background: rgba(17, 17, 17, 0.98);
-    border-bottom-color: rgba(255, 255, 255, 0.12);
-    color: #ffffff;
 }
 
 .mega-menu-dropdown.is-active {
@@ -194,22 +224,24 @@
     pointer-events: auto;
 }
 
-/* Inner Container matches header horizontal padding (40px) */
 .mega-menu-container {
     width: 100%;
-    padding: 0 40px; /* Aligns content directly with nav bar left/right edges */
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-
-/* Row-based layout for left-to-right text flow */
-.mega-menu-column {
+    padding: 0 40px;
     display: flex;
     flex-direction: row;
-    align-items: center;
-    gap: 32px;
-    width: 100%;
+    gap: 60px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.mega-menu-column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    min-width: 180px;
+    text-align: left;
 }
 
 .mega-menu-parent-title {
@@ -218,33 +250,34 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: inherit;
+    color: #111111 !important;
     text-decoration: none;
-    padding-bottom: 0;
-    border-bottom: none;
-    min-width: 140px;
-    flex-shrink: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    width: 100%;
+    text-align: right;
 }
 
-/* Sublist flows items horizontally left-to-right */
 .mega-menu-sublist {
     list-style: none;
     padding: 0;
     margin: 0;
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
 }
 
 .mega-menu-sublink {
     font-family: Arial, sans-serif;
     font-size: 13px;
-    color: rgba(0, 0, 0, 0.65);
+    color: rgba(0, 0, 0, 0.65) !important;
     text-decoration: none;
     transition: color 0.2s ease;
-    white-space: nowrap;
+    text-align: left;
+    display: block;
 }
 
 .mega-menu-sublink.empty-notice {
@@ -252,29 +285,21 @@
     opacity: 0.5;
 }
 
-.site-header.is-dark .mega-menu-sublink {
-    color: rgba(255, 255, 255, 0.65);
-}
-
 .mega-menu-sublink:hover {
-    color: #000000;
-}
-
-.site-header.is-dark .mega-menu-sublink:hover {
-    color: #ffffff;
+    color: #000000 !important;
 }
 
 .mega-menu-view-all {
     display: inline-block;
-    margin-top: 0;
+    margin-top: 6px;
     font-family: Arial, sans-serif;
     font-size: 12px;
     font-weight: 600;
-    color: inherit;
+    color: #111111 !important;
     text-decoration: none;
     opacity: 0.8;
     transition: opacity 0.2s ease;
-    white-space: nowrap;
+    text-align: left;
 }
 
 .mega-menu-view-all:hover {
@@ -371,8 +396,10 @@
 }
 
 @media (max-width: 900px) {
-    .site-header {
+    .site-header-inner {
         padding: 0 20px;
+    }
+    .site-header {
         height: 60px;
     }
     .mega-menu-container {
@@ -400,6 +427,13 @@
 
     if (!header) return;
 
+    // Detect if current page is Homepage vs internal page
+    const isHomepage = window.location.pathname === '/' || window.location.pathname === '{{ routes.root_url }}';
+
+    if (isHomepage) {
+        header.classList.add('is-dark-hero');
+    }
+
     window.addEventListener('scroll', () => {
         if (window.scrollY > 40) {
             header.classList.add('is-scrolled');
@@ -408,25 +442,27 @@
         }
     }, { passive: true });
 
-    if (megaTrigger && megaDropdown) {
-        let hoverTimer;
+  if (megaTrigger && megaDropdown) {
+    let hoverTimer;
 
-        const showMegaMenu = () => {
-            clearTimeout(hoverTimer);
-            megaDropdown.classList.add('is-active');
-        };
+    const showMegaMenu = () => {
+        clearTimeout(hoverTimer);
+        megaDropdown.classList.add('is-active');
+        header.classList.add('mega-menu-open'); // Matches header background to dropdown
+    };
 
-        const hideMegaMenu = () => {
-            hoverTimer = setTimeout(() => {
-                megaDropdown.classList.remove('is-active');
-            }, 180);
-        };
+    const hideMegaMenu = () => {
+        hoverTimer = setTimeout(() => {
+            megaDropdown.classList.remove('is-active');
+            header.classList.remove('mega-menu-open'); // Reverts header to initial state
+        }, 180);
+    };
 
-        megaTrigger.addEventListener('mouseenter', showMegaMenu);
-        megaTrigger.addEventListener('mouseleave', hideMegaMenu);
-        megaDropdown.addEventListener('mouseenter', showMegaMenu);
-        megaDropdown.addEventListener('mouseleave', hideMegaMenu);
-    }
+    megaTrigger.addEventListener('mouseenter', showMegaMenu);
+    megaTrigger.addEventListener('mouseleave', hideMegaMenu);
+    megaDropdown.addEventListener('mouseenter', showMegaMenu);
+    megaDropdown.addEventListener('mouseleave', hideMegaMenu);
+}
 
     if (mobileToggle && mobileDrawer) {
         mobileToggle.addEventListener('click', () => {
@@ -445,7 +481,7 @@
         });
     }
 
-    const darkSections = document.querySelectorAll('.jacket-reveal, [data-theme="dark"], .dark-section');
+    const darkSections = document.querySelectorAll('.hero-dark, .jacket-reveal, [data-theme="dark"], .dark-section');
     
     if (darkSections.length > 0) {
         const observerOptions = {
@@ -480,7 +516,7 @@
       "type": "text",
       "id": "logo_text",
       "label": "Logo Text",
-      "default": "ROVETZA"
+      "default": "STICH CLOTHING"
     },
     {
       "type": "text",
