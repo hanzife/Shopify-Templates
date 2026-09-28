@@ -71,18 +71,13 @@
 
     let isTransitioning = false;
 
+    const SCROLL_DURATION = 420;
+
     function getNextSection() {
-        /*
-         * Find the Shopify section wrapper containing the Hero.
-         */
         const heroSection = hero.closest('[id^="shopify-section-"]');
 
         if (!heroSection) return null;
 
-        /*
-         * The immediate next Shopify section is the destination.
-         * Do NOT search further down the page.
-         */
         const nextSection = heroSection.nextElementSibling;
 
         if (
@@ -97,19 +92,20 @@
     }
 
     function easeInOut(t) {
-        return t < 0.5
-            ? 4 * t * t * t
-            : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        return t * t * (3 - 2 * t);
     }
 
-    function smoothScrollTo(targetY, duration) {
+    function animateScroll(targetY) {
         const startY = window.scrollY;
         const distance = targetY - startY;
         const startTime = performance.now();
 
-        function animate(currentTime) {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
+        function frame(now) {
+            const progress = Math.min(
+                (now - startTime) / SCROLL_DURATION,
+                1
+            );
+
             const eased = easeInOut(progress);
 
             window.scrollTo(
@@ -118,13 +114,14 @@
             );
 
             if (progress < 1) {
-                requestAnimationFrame(animate);
+                requestAnimationFrame(frame);
             } else {
+                window.scrollTo(0, targetY);
                 isTransitioning = false;
             }
         }
 
-        requestAnimationFrame(animate);
+        requestAnimationFrame(frame);
     }
 
     function goToNextSection() {
@@ -138,7 +135,7 @@
             nextSection.getBoundingClientRect().top +
             window.scrollY;
 
-        smoothScrollTo(targetY, 900);
+        animateScroll(targetY);
     }
 
     function goToHero() {
@@ -146,48 +143,68 @@
 
         isTransitioning = true;
 
-        smoothScrollTo(0, 900);
+        animateScroll(0);
     }
 
-    window.addEventListener('wheel', function (event) {
+    window.addEventListener(
+        'wheel',
+        function (event) {
 
-        if (isTransitioning) {
-            event.preventDefault();
-            return;
+            /*
+             * LOCK THE BROWSER'S NATIVE SCROLL
+             * immediately when transition is active.
+             */
+            if (isTransitioning) {
+                event.preventDefault();
+                return;
+            }
+
+            const heroRect = hero.getBoundingClientRect();
+
+            const heroAtTop =
+                Math.abs(heroRect.top) <= 2;
+
+            const nextSection = getNextSection();
+
+            if (!nextSection) return;
+
+            const nextAtTop =
+                Math.abs(
+                    nextSection.getBoundingClientRect().top
+                ) <= 2;
+
+            /*
+             * DOWN
+             * First wheel movement immediately takes
+             * control away from the browser.
+             */
+            if (
+                event.deltaY > 0 &&
+                heroAtTop
+            ) {
+                event.preventDefault();
+                goToNextSection();
+                return;
+            }
+
+            /*
+             * UP
+             * From the next section, immediately return
+             * to the hero.
+             */
+            if (
+                event.deltaY < 0 &&
+                nextAtTop
+            ) {
+                event.preventDefault();
+                goToHero();
+            }
+
+        },
+        {
+            passive: false
         }
-
-        const heroRect = hero.getBoundingClientRect();
-
-        const heroAtTop =
-            Math.abs(heroRect.top) < 5;
-
-        /*
-         * HERO -> IMMEDIATE NEXT SECTION
-         */
-        if (
-            event.deltaY > 0 &&
-            heroAtTop
-        ) {
-            event.preventDefault();
-            goToNextSection();
-            return;
-        }
-
-        /*
-         * IMMEDIATE NEXT SECTION -> HERO
-         */
-        const nextSection = getNextSection();
-
-        if (
-            event.deltaY < 0 &&
-            nextSection &&
-            Math.abs(nextSection.getBoundingClientRect().top) < 5
-        ) {
-            event.preventDefault();
-            goToHero();
-        }
-
-    }, { passive: false });
+    );
 
 })();
 </script>

@@ -193,6 +193,18 @@
 }
 
 /* ==========================================================
+   MOBILE NAV DRAWER OPEN STATE (OVERRIDE HEADER STYLES)
+   ========================================================== */
+.site-header.mobile-drawer-open .site-header-inner {
+    color: #111111 !important;
+    mix-blend-mode: normal !important;
+}
+
+.site-header.mobile-drawer-open.is-dark-header .site-header-inner {
+    color: #ffffff !important;
+}
+
+/* ==========================================================
    DROPDOWN MENU (OPAQUE WHITE BG, ISOLATED FROM BLEND MODE)
    ========================================================== */
 
@@ -255,7 +267,8 @@
     padding-bottom: 8px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     width: 100%;
-    text-align: right;
+    text-align: left !important;
+    display: block !important;
 }
 
 .mega-menu-sublist {
@@ -442,27 +455,27 @@
         }
     }, { passive: true });
 
-  if (megaTrigger && megaDropdown) {
-    let hoverTimer;
+    if (megaTrigger && megaDropdown) {
+        let hoverTimer;
 
-    const showMegaMenu = () => {
-        clearTimeout(hoverTimer);
-        megaDropdown.classList.add('is-active');
-        header.classList.add('mega-menu-open'); // Matches header background to dropdown
-    };
+        const showMegaMenu = () => {
+            clearTimeout(hoverTimer);
+            megaDropdown.classList.add('is-active');
+            header.classList.add('mega-menu-open');
+        };
 
-    const hideMegaMenu = () => {
-        hoverTimer = setTimeout(() => {
-            megaDropdown.classList.remove('is-active');
-            header.classList.remove('mega-menu-open'); // Reverts header to initial state
-        }, 180);
-    };
+        const hideMegaMenu = () => {
+            hoverTimer = setTimeout(() => {
+                megaDropdown.classList.remove('is-active');
+                header.classList.remove('mega-menu-open');
+            }, 180);
+        };
 
-    megaTrigger.addEventListener('mouseenter', showMegaMenu);
-    megaTrigger.addEventListener('mouseleave', hideMegaMenu);
-    megaDropdown.addEventListener('mouseenter', showMegaMenu);
-    megaDropdown.addEventListener('mouseleave', hideMegaMenu);
-}
+        megaTrigger.addEventListener('mouseenter', showMegaMenu);
+        megaTrigger.addEventListener('mouseleave', hideMegaMenu);
+        megaDropdown.addEventListener('mouseenter', showMegaMenu);
+        megaDropdown.addEventListener('mouseleave', hideMegaMenu);
+    }
 
     if (mobileToggle && mobileDrawer) {
         mobileToggle.addEventListener('click', () => {
@@ -471,10 +484,15 @@
             mobileToggle.setAttribute('aria-expanded', isOpen);
             mobileDrawer.setAttribute('aria-hidden', !isOpen);
             
+            // Toggle state helper classes on header for seamless color switching
+            header.classList.toggle('mobile-drawer-open', isOpen);
+
             if (header.classList.contains('is-dark')) {
                 mobileDrawer.classList.add('is-dark-drawer');
+                header.classList.add('is-dark-header');
             } else {
                 mobileDrawer.classList.remove('is-dark-drawer');
+                header.classList.remove('is-dark-header');
             }
 
             document.body.style.overflow = isOpen ? 'hidden' : '';
