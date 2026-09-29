@@ -6,8 +6,9 @@
   elsif section.settings.video_url != blank
     assign video_src = section.settings.video_url
   else
-    assign video_src = 'https://alter-designs.com/cdn/shop/videos/c/vp/0add3432dca0477fb68a89ecbbe36b89/0add3432dca0477fb68a89ecbbe36b89.HD-1080p-7.2Mbps-94034021.mp4'
+{% assign video_src = 'hero-video.webm' | asset_url %}
   endif
+
 %}
 
 <section class="hero-video" id="HeroSection">
