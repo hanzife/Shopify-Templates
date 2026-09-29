@@ -1,0 +1,158 @@
+<!doctype html>
+<html class="no-js" lang="{{ request.locale.iso_code }}">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <link rel="canonical" href="{{ canonical_url }}">
+
+    {% # Inlined CSS Variables %}
+    {% render 'css-variables' %}
+
+    {% unless settings.type_primary_font.system? %}
+      <link rel="preconnect" href="https://fonts.shopifycdn.com" crossorigin>
+      {{ settings.type_primary_font | font_url | preload_tag: as: 'font', crossorigin: 'anonymous' }}
+    {% endunless %}
+
+    {% # Load and preload the critical CSS %}
+    {{ 'critical.css' | asset_url | stylesheet_tag: preload: true }}
+
+    {% # Social, title, etc. %}
+    {% render 'meta-tags' %}
+
+    {{ content_for_header }}
+
+
+    <style>
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: 100% !important;
+  overflow-x: clip !important; /* Preserves position: sticky behavior */
+}
+
+#MainContent,
+.shopify-section {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 1. Pin Hero Section */
+.shopify-section:has(#HeroSection),
+.shopify-section:has([data-section-type="hero"]) {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  /* Ensure Hero fits screen height cleanly for scroll pass-through */
+  min-height: 100vh;
+  will-change: transform;
+}
+
+/* 2. Force solid background on ALL subsequent sections sliding over */
+#MainContent .shopify-section:not(:has(#HeroSection)):not(:has([data-section-type="hero"])) {
+  position: relative;
+  z-index: 2;
+  background-color: var(--gradient-background, #ffffff); /* CRITICAL: Prevents transparency overlap */
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08); /* Optional: Smooth visual separation shadow */
+}
+
+/* Full bleed containers */
+.page-width,
+.container,
+.wrapper {
+  max-width: 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+</style>
+
+
+  </head>
+
+  <body>
+    {% section 'header' %}
+
+    <main id="MainContent" role="main" tabindex="-1">
+      {{ content_for_layout }}
+    </main>
+
+    {% sections 'footer-group' %}
+
+    <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const hero = document.getElementById('HeroSection');
+    const header = document.getElementById('SiteHeader');
+    const logo = document.getElementById('HeroMainLogo');
+    const slot = document.getElementById('HeaderLogoSlot');
+    const slotText = slot && slot.querySelector('.header__logo-text');
+    const nextSection = hero.closest('.shopify-section')?.nextElementSibling;
+
+    function updateSolid() {
+  if (!nextSection) return;
+  // Header "touches" the next section when that section's top reaches the header's bottom edge
+  const solid = nextSection.getBoundingClientRect().top <= header.offsetHeight;
+  header.classList.toggle('is-solid', solid);
+  logo.classList.toggle('is-solid', solid);
+}
+
+
+    if (!hero || !header || !logo || !slot || !slotText) return;
+
+    const THRESHOLD = 24; // px scrolled before the logo docks
+    let start = { x: 0, y: 0 };
+    let dock = { x: 0, y: 0 };
+    let scale = 0.2;
+    let docked = null;
+
+    function measure() {
+      // Start: exact center of the hero (hero is pinned at top:0)
+      start.x = document.documentElement.clientWidth / 2;
+      start.y = hero.offsetHeight / 2;
+
+      // Target: center of the invisible header slot
+      const r = slot.getBoundingClientRect();
+      dock.x = r.left + r.width / 2;
+      dock.y = r.top + r.height / 2;
+
+      // Scale = header font size / hero font size
+      const from = parseFloat(getComputedStyle(logo).fontSize);
+      const to = parseFloat(getComputedStyle(slotText).fontSize);
+      scale = to / from;
+    }
+
+    function apply(force) {
+      const next = window.scrollY > THRESHOLD;
+      if (!force && next === docked) return;
+      docked = next;
+
+      const p = docked ? dock : start;
+      logo.style.setProperty('--logo-x', p.x + 'px');
+      logo.style.setProperty('--logo-y', p.y + 'px');
+      logo.style.setProperty('--logo-scale', docked ? scale : 1);
+      logo.classList.toggle('is-docked', docked);
+    }
+
+    logo.style.transition = 'none';
+    measure();
+    apply(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => { logo.style.transition = ''; }));
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => { measure(); apply(true); });
+    }
+
+    window.addEventListener('scroll', () => apply(false), { passive: true });
+    window.addEventListener('resize', () => { measure(); apply(true); });
+  });
+</script>
+
+  </body>
+</html>

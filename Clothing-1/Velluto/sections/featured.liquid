@@ -368,10 +368,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
-
 <script>
 (function () {
     const isMobile = window.innerWidth <= 900;
+
     const section = document.querySelector("#jacketSection");
     const track = document.querySelector("#jacketTrack");
     const jackets = gsap.utils.toArray(".jacket-image");
@@ -386,70 +386,120 @@
     const COUNT = slots.length;
 
     if (totalJackets) {
-        totalJackets.textContent = String(COUNT).padStart(2, "0");
+        totalJackets.textContent =
+            String(COUNT).padStart(2, "0");
     }
 
-    /* =========================================================
-       MOBILE
-       ========================================================= */
+    /*
+     * ==========================================================
+     * MOBILE
+     * ==========================================================
+     */
 
     if (isMobile) {
-        const viewport = document.querySelector("#jacketViewport");
+
+        const viewport =
+            document.querySelector("#jacketViewport");
+
+        if (!viewport) return;
 
         jackets.forEach((img, i) => {
-            img.style.opacity = i === 0 ? 1 : 0.2;
-            img.style.transform = i === 0
-                ? "scale(1)"
-                : "scale(0.92)";
+            img.style.opacity =
+                i === 0 ? 1 : 0.2;
+
+            img.style.transform =
+                i === 0
+                    ? "scale(1)"
+                    : "scale(0.92)";
         });
 
-        viewport.addEventListener("scroll", () => {
-            const scrollLeft = viewport.scrollLeft;
-            const slotWidth = window.innerWidth;
+        viewport.addEventListener(
+            "scroll",
+            () => {
 
-            const index = Math.round(
-                scrollLeft / slotWidth
-            );
+                const scrollLeft =
+                    viewport.scrollLeft;
 
-            const clampedIndex = Math.max(
-                0,
-                Math.min(index, COUNT - 1)
-            );
+                const slotWidth =
+                    window.innerWidth;
 
-            if (currentJacket) {
-                currentJacket.textContent =
-                    String(clampedIndex + 1).padStart(2, "0");
+                const index =
+                    Math.round(
+                        scrollLeft / slotWidth
+                    );
+
+                const clampedIndex =
+                    Math.max(
+                        0,
+                        Math.min(
+                            index,
+                            COUNT - 1
+                        )
+                    );
+
+                if (currentJacket) {
+                    currentJacket.textContent =
+                        String(
+                            clampedIndex + 1
+                        ).padStart(2, "0");
+                }
+
+                if (progressBar) {
+                    progressBar.style.width =
+                        `${
+                            (
+                                clampedIndex /
+                                Math.max(
+                                    1,
+                                    COUNT - 1
+                                )
+                            ) * 100
+                        }%`;
+                }
+
+                jackets.forEach((img, i) => {
+
+                    const itemLeft =
+                        i * slotWidth;
+
+                    const distance =
+                        Math.abs(
+                            scrollLeft - itemLeft
+                        ) / slotWidth;
+
+                    const scale =
+                        Math.max(
+                            0.92,
+                            1 - distance * 0.08
+                        );
+
+                    const opacity =
+                        Math.max(
+                            0.2,
+                            1 - distance * 0.75
+                        );
+
+                    img.style.transform =
+                        `scale(${scale})`;
+
+                    img.style.opacity =
+                        opacity;
+                });
+
+            },
+            {
+                passive: true
             }
-
-            if (progressBar) {
-                progressBar.style.width =
-                    `${(clampedIndex / Math.max(1, COUNT - 1)) * 100}%`;
-            }
-
-            jackets.forEach((img, i) => {
-                const itemLeft = i * slotWidth;
-                const distance =
-                    Math.abs(scrollLeft - itemLeft) / slotWidth;
-
-                const scale =
-                    Math.max(0.92, 1 - distance * 0.08);
-
-                const opacity =
-                    Math.max(0.2, 1 - distance * 0.75);
-
-                img.style.transform =
-                    `scale(${scale})`;
-
-                img.style.opacity = opacity;
-            });
-        }, { passive: true });
+        );
 
         return;
     }
 
-    /* =========================================================
-       DESKTOP
-       ========================================================= */
+    /*
+     * ==========================================================
+     * DESKTOP
+     * ==========================================================
+     */
 
     if (
         typeof gsap === "undefined" ||
@@ -461,31 +511,75 @@
     gsap.registerPlugin(ScrollTrigger);
 
     /*
-     * The section is only slightly taller than the viewport.
-     * Each product is controlled by one wheel gesture.
+     * ----------------------------------------------------------
+     * EXISTING PINNED ARCHITECTURE
+     * ----------------------------------------------------------
+     *
+     * We keep your existing vertical scroll length.
+     * Each product gets its own portion of the pinned section.
      */
-    const EXTRA_SCROLL_PER_PRODUCT = 90;
+
+    const scrollDurationMultiplier =
+        Math.max(1, COUNT - 1) * 100;
 
     section.style.height =
-        `${100 + (COUNT - 1) * EXTRA_SCROLL_PER_PRODUCT}vh`;
+        `${100 + scrollDurationMultiplier}vh`;
 
     let currentIndex = 0;
+
     let isAnimating = false;
+
     let wheelLocked = false;
 
-    const TRANSITION_DURATION = 0.65;
+    let wheelReleaseTimer = null;
+
+    /*
+     * Apple-style timing.
+     *
+     * Faster than the previous 0.9s, but not abrupt.
+     */
+    const TRANSITION_DURATION = 0.72;
+
+    /*
+     * Prevent tiny trackpad noise.
+     */
     const WHEEL_THRESHOLD = 8;
 
+    /*
+     * Small cooldown after the animation.
+     *
+     * This prevents MacBook trackpad momentum from
+     * immediately jumping over another product.
+     */
+    const RELEASE_DELAY = 110;
+
+    /*
+     * ----------------------------------------------------------
+     * SLOT WIDTH
+     * ----------------------------------------------------------
+     */
+
     function getSlotWidth() {
-        return slots[0].getBoundingClientRect().width;
+        return slots[0]
+            .getBoundingClientRect()
+            .width;
     }
 
+    /*
+     * ----------------------------------------------------------
+     * UI
+     * ----------------------------------------------------------
+     */
+
     function updateUI(index) {
+
         const number =
-            String(index + 1).padStart(2, "0");
+            String(index + 1)
+                .padStart(2, "0");
 
         if (currentJacket) {
-            currentJacket.textContent = number;
+            currentJacket.textContent =
+                number;
         }
 
         if (jacketLabel) {
@@ -494,132 +588,450 @@
         }
 
         if (progressBar) {
-            gsap.to(progressBar, {
-                width:
-                    `${(index / Math.max(1, COUNT - 1)) * 100}%`,
-                duration: 0.35,
-                ease: "power2.out",
-                overwrite: true
-            });
+
+            gsap.to(
+                progressBar,
+                {
+                    width:
+                        `${
+                            (
+                                index /
+                                Math.max(
+                                    1,
+                                    COUNT - 1
+                                )
+                            ) * 100
+                        }%`,
+
+                    duration: 0.42,
+
+                    /*
+                     * Slightly softer than the main
+                     * product movement.
+                     */
+                    ease: "power2.out",
+
+                    overwrite: true
+                }
+            );
         }
     }
 
-    function updateJacketStates(index, animate) {
-        jackets.forEach((jacket, i) => {
-            const active = i === index;
+    /*
+     * ----------------------------------------------------------
+     * PRODUCT VISUAL STATES
+     * ----------------------------------------------------------
+     *
+     * The active product becomes clear and dominant.
+     *
+     * Previous / next products remain subtly visible,
+     * which creates depth instead of a hard image swap.
+     */
 
-            gsap.to(jacket, {
-                opacity: active ? 1 : 0.18,
-                scale: active ? 1 : 0.94,
-                duration: animate ? 0.55 : 0,
-                ease: "power2.out",
-                overwrite: true
-            });
-        });
+    function updateJacketStates(
+        index,
+        animate = true
+    ) {
+
+        jackets.forEach(
+            (jacket, i) => {
+
+                const distance =
+                    Math.abs(i - index);
+
+                /*
+                 * Active product.
+                 */
+                if (distance === 0) {
+
+                    gsap.to(
+                        jacket,
+                        {
+                            opacity: 1,
+                            scale: 1,
+
+                            duration:
+                                animate
+                                    ? 0.62
+                                    : 0,
+
+                            /*
+                             * Smooth settle.
+                             */
+                            ease:
+                                "power3.out",
+
+                            overwrite: true
+                        }
+                    );
+
+                    return;
+                }
+
+                /*
+                 * Adjacent product.
+                 *
+                 * Slightly more visible than
+                 * products further away.
+                 */
+                if (distance === 1) {
+
+                    gsap.to(
+                        jacket,
+                        {
+                            opacity: 0.28,
+                            scale: 0.955,
+
+                            duration:
+                                animate
+                                    ? 0.58
+                                    : 0,
+
+                            ease:
+                                "power2.out",
+
+                            overwrite: true
+                        }
+                    );
+
+                    return;
+                }
+
+                /*
+                 * Everything else.
+                 */
+                gsap.to(
+                    jacket,
+                    {
+                        opacity: 0.12,
+                        scale: 0.94,
+
+                        duration:
+                            animate
+                                ? 0.58
+                                : 0,
+
+                        ease:
+                            "power2.out",
+
+                        overwrite: true
+                    }
+                );
+            }
+        );
     }
 
-    function setJacket(index, animate) {
+    /*
+     * ----------------------------------------------------------
+     * HORIZONTAL PRODUCT TRANSITION
+     * ----------------------------------------------------------
+     */
+
+    function positionJacket(
+        index,
+        animate = true
+    ) {
+
         const x =
             -(getSlotWidth() * index);
 
+        /*
+         * INITIAL POSITION
+         */
+
         if (!animate) {
-            gsap.set(track, { x });
-            updateJacketStates(index, false);
+
+            gsap.set(
+                track,
+                {
+                    x: x
+                }
+            );
+
+            updateJacketStates(
+                index,
+                false
+            );
+
             updateUI(index);
-            return;
-        }
 
-        isAnimating = true;
+            currentIndex =
+                index;
 
-        gsap.to(track, {
-            x,
-            duration: TRANSITION_DURATION,
-            ease: "power3.inOut",
-            overwrite: true,
-            onComplete: () => {
-                isAnimating = false;
-
-                /*
-                 * Release wheel lock only after the
-                 * horizontal movement has completely settled.
-                 */
-                requestAnimationFrame(() => {
-                    wheelLocked = false;
-                });
-            }
-        });
-
-        updateJacketStates(index, true);
-
-        currentIndex = index;
-        updateUI(index);
-    }
-
-    /*
-     * Pin only the visual stage.
-     * The section itself remains a normal scroll container.
-     */
-    const trigger = ScrollTrigger.create({
-        trigger: section,
-        start: "top top",
-        end: () => `+=${(COUNT - 1) * EXTRA_SCROLL_PER_PRODUCT}vh`,
-        pin: ".jacket-stage",
-        pinSpacing: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-
-        onEnter: () => {
-            if (!isAnimating) {
-                setJacket(0, false);
-            }
-        },
-
-        onEnterBack: () => {
-            if (!isAnimating) {
-                setJacket(COUNT - 1, false);
-            }
-        }
-    });
-
-    /*
-     * Convert vertical wheel movement into one clean
-     * horizontal product transition.
-     */
-    function handleWheel(event) {
-        if (!trigger.isActive) return;
-
-        const delta = event.deltaY;
-
-        if (Math.abs(delta) < WHEEL_THRESHOLD) {
             return;
         }
 
         /*
-         * If we are currently animating a jacket,
-         * completely consume the wheel event.
+         * Prevent another transition
+         * while this one is running.
          */
-        if (isAnimating || wheelLocked) {
+
+        if (isAnimating) return;
+
+        isAnimating = true;
+        wheelLocked = true;
+
+        currentIndex =
+            index;
+
+        updateUI(index);
+
+        /*
+         * ------------------------------------------------------
+         * MAIN PRODUCT MOVEMENT
+         * ------------------------------------------------------
+         *
+         * power3.inOut gives:
+         *
+         * quick start
+         *      ↓
+         * smooth middle
+         *      ↓
+         * soft landing
+         *
+         * This is much less mechanical than linear movement.
+         */
+
+        gsap.to(
+            track,
+            {
+                x: x,
+
+                duration:
+                    TRANSITION_DURATION,
+
+                ease:
+                    "power3.inOut",
+
+                overwrite: true,
+
+                onComplete: function () {
+
+                    /*
+                     * Make absolutely sure the track
+                     * ends at the exact product position.
+                     */
+                    gsap.set(
+                        track,
+                        {
+                            x: x
+                        }
+                    );
+
+                    isAnimating = false;
+
+                    clearTimeout(
+                        wheelReleaseTimer
+                    );
+
+                    wheelReleaseTimer =
+                        setTimeout(
+                            function () {
+                                wheelLocked =
+                                    false;
+                            },
+                            RELEASE_DELAY
+                        );
+                }
+            }
+        );
+
+        /*
+         * Product image transition.
+         */
+
+        updateJacketStates(
+            index,
+            true
+        );
+    }
+
+    /*
+     * ----------------------------------------------------------
+     * SCROLLTRIGGER
+     * ----------------------------------------------------------
+     *
+     * KEEPING YOUR EXISTING LOGIC:
+     *
+     * The section becomes pinned.
+     * Vertical scroll position represents the
+     * horizontal product sequence.
+     */
+
+    const trigger =
+        ScrollTrigger.create(
+            {
+                trigger: section,
+
+                start:
+                    "top top",
+
+                end:
+                    `+=${scrollDurationMultiplier}%`,
+
+                pin:
+                    ".jacket-stage",
+
+                pinSpacing:
+                    true,
+
+                anticipatePin:
+                    1,
+
+                invalidateOnRefresh:
+                    true,
+
+                /*
+                 * Entering from above.
+                 */
+                onEnter: function () {
+
+                    if (!isAnimating) {
+
+                        positionJacket(
+                            0,
+                            false
+                        );
+                    }
+                },
+
+                /*
+                 * Entering from below.
+                 *
+                 * Start at the final product.
+                 */
+                onEnterBack: function () {
+
+                    if (!isAnimating) {
+
+                        positionJacket(
+                            COUNT - 1,
+                            false
+                        );
+                    }
+                }
+            }
+        );
+
+    /*
+     * ----------------------------------------------------------
+     * WHEEL CONTROL
+     * ----------------------------------------------------------
+     *
+     * This is the important part.
+     *
+     * One meaningful wheel gesture =
+     * one product transition.
+     *
+     * The browser's native vertical scroll is prevented
+     * while moving between products.
+     *
+     * At the first / last product we release it.
+     */
+
+    function handleWheel(event) {
+
+        /*
+         * Ignore events outside the pinned
+         * jacket experience.
+         */
+        if (!trigger.isActive) {
+            return;
+        }
+
+        const delta =
+            event.deltaY;
+
+        /*
+         * Ignore tiny trackpad noise.
+         */
+        if (
+            Math.abs(delta) <
+            WHEEL_THRESHOLD
+        ) {
+            return;
+        }
+
+        /*
+         * ------------------------------------------------------
+         * DURING PRODUCT ANIMATION
+         * ------------------------------------------------------
+         *
+         * Completely consume the wheel.
+         *
+         * This is important for MacBook trackpads.
+         */
+        if (
+            isAnimating ||
+            wheelLocked
+        ) {
+
             event.preventDefault();
+
             return;
         }
 
         const direction =
-            delta > 0 ? 1 : -1;
-
-        const nextIndex =
-            currentIndex + direction;
+            delta > 0
+                ? 1
+                : -1;
 
         /*
-         * IMPORTANT:
+         * ------------------------------------------------------
+         * LAST PRODUCT
+         * ------------------------------------------------------
          *
-         * At the first jacket, upward scrolling is NOT
-         * blocked. The browser can naturally leave
-         * the section.
-         *
-         * At the last jacket, downward scrolling is NOT
-         * blocked. The browser can naturally enter
-         * the next section.
+         * Allow native scrolling to continue
+         * into the next section.
          */
+
+        if (
+            currentIndex === COUNT - 1 &&
+            direction > 0
+        ) {
+
+            /*
+             * Do NOT preventDefault.
+             *
+             * Browser continues naturally.
+             */
+            return;
+        }
+
+        /*
+         * ------------------------------------------------------
+         * FIRST PRODUCT
+         * ------------------------------------------------------
+         *
+         * Allow native scrolling to continue
+         * back to the previous section.
+         */
+
+        if (
+            currentIndex === 0 &&
+            direction < 0
+        ) {
+
+            /*
+             * Do NOT preventDefault.
+             */
+            return;
+        }
+
+        /*
+         * ------------------------------------------------------
+         * PRODUCT NAVIGATION
+         * ------------------------------------------------------
+         */
+
+        const nextIndex =
+            currentIndex +
+            direction;
+
+        /*
+         * Safety check.
+         */
+
         if (
             nextIndex < 0 ||
             nextIndex >= COUNT
@@ -628,15 +1040,25 @@
         }
 
         /*
-         * We are moving between products,
-         * therefore prevent the browser from moving
-         * vertically while the product transition happens.
+         * STOP NORMAL VERTICAL PAGE SCROLL.
          */
+
         event.preventDefault();
+
+        /*
+         * Lock immediately.
+         */
 
         wheelLocked = true;
 
-        setJacket(nextIndex, true);
+        /*
+         * Move horizontally.
+         */
+
+        positionJacket(
+            nextIndex,
+            true
+        );
     }
 
     window.addEventListener(
@@ -648,22 +1070,44 @@
     );
 
     /*
-     * Keep horizontal position correct after resize.
+     * ----------------------------------------------------------
+     * RESIZE
+     * ----------------------------------------------------------
      */
-    window.addEventListener("resize", () => {
-        if (isAnimating) return;
 
-        gsap.set(track, {
-            x: -(getSlotWidth() * currentIndex)
-        });
+    window.addEventListener(
+        "resize",
+        function () {
 
-        ScrollTrigger.refresh();
-    });
+            if (isAnimating) {
+                return;
+            }
+
+            gsap.set(
+                track,
+                {
+                    x:
+                        -(
+                            getSlotWidth() *
+                            currentIndex
+                        )
+                }
+            );
+
+            ScrollTrigger.refresh();
+        }
+    );
 
     /*
-     * Initial state.
+     * ----------------------------------------------------------
+     * INITIAL STATE
+     * ----------------------------------------------------------
      */
-    setJacket(0, false);
+
+    positionJacket(
+        0,
+        false
+    );
 
     ScrollTrigger.refresh();
 

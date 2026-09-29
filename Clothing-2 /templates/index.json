@@ -1,0 +1,18 @@
+{
+  "sections": {
+    "hero": {
+      "type": "home-hero",
+      "settings": {}
+    },
+    "featured_products": {
+      "type": "featured-products",
+      "settings": {
+        "title": "Signature Collection"
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "featured_products"
+  ]
+}

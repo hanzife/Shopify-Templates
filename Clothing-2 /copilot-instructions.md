@@ -1,0 +1,1 @@
+/Users/yassir/Public/Shopify Tempaltes/Clothing-2 /AGENTS.md
