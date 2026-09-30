@@ -13,19 +13,36 @@
     {%- for product in products_to_show limit: 4 -%}
       <div class="product-card" data-product-id="{{ product.id }}">
         <div class="product-card__image-wrapper">
-          <a href="{{ product.url }}">
-            {%- if product.featured_image != blank -%}
-              <img 
-                src="{{ product.featured_image | image_url: width: 800 }}" 
-                alt="{{ product.featured_image.alt | escape }}" 
-                loading="lazy"
-                class="product-card__img"
-                id="ProductImage-{{ product.id }}">
-            {%- else -%}
-              <div class="product-card__placeholder">
-                {{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}
-              </div>
-            {%- endif -%}
+          
+          {%- comment -%} Wishlist Heart Button {%- endcomment -%}
+          <button 
+            type="button" 
+            class="wishlist-btn" 
+            data-product-id="{{ product.id }}" 
+            aria-label="Add to Wishlist">
+            <svg class="heart-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </button>
+
+          {%- comment -%} Smooth Sliding Gallery Track {%- endcomment -%}
+          <a href="{{ product.url }}" class="product-card__gallery-slider">
+            <div class="product-card__track">
+              {%- if product.images.size > 0 -%}
+                {%- for image in product.images limit: 3 -%}
+                  <img 
+                    src="{{ image | image_url: width: 800 }}" 
+                    alt="{{ image.alt | escape }}" 
+                    loading="lazy"
+                    class="product-card__slide-img"
+                    id="ProductImage-{{ product.id }}-{{ forloop.index0 }}">
+                {%- endfor -%}
+              {%- else -%}
+                <div class="product-card__placeholder">
+                  {{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}
+                </div>
+              {%- endif -%}
+            </div>
           </a>
 
           {%- comment -%} Quick Add Hover Bar on Bottom of Image {%- endcomment -%}
@@ -169,11 +186,22 @@
     }
   }
 
+  /* Product Card Container & Hover Shadow */
   .product-card {
     display: flex;
     flex-direction: column;
     position: relative;
     background: #ffffff;
+    border-radius: 8px;
+    padding: 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .product-card:hover {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
   }
 
   .product-card__image-wrapper {
@@ -183,17 +211,66 @@
     background-color: #f6f6f6;
     margin-bottom: 0.75rem;
     position: relative;
+    border-radius: 6px;
   }
 
-  .product-card__img {
+  /* Wishlist Heart Button */
+  .wishlist-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    color: #111111;
+  }
+
+  .wishlist-btn:hover {
+    transform: scale(1.1);
+    background: #ffffff;
+  }
+
+  .wishlist-btn.active {
+    color: #ff3b30;
+  }
+
+  .wishlist-btn.active .heart-icon {
+    fill: #ff3b30;
+    stroke: #ff3b30;
+  }
+
+  /* Smooth Slider Track */
+  .product-card__gallery-slider {
+    display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
+    overflow: hidden;
+    position: relative;
   }
 
-  .product-card:hover .product-card__img {
-    transform: scale(1.03);
+  .product-card__track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+  }
+
+  .product-card__slide-img {
+    width: 100%;
+    height: 100%;
+    flex-shrink: 0;
+    object-fit: cover;
   }
 
   /* Hover Quick Add Overlay */
@@ -211,6 +288,7 @@
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     box-sizing: border-box;
     border-top: 1px solid #f0f0f0;
+    z-index: 5;
   }
 
   .product-card__image-wrapper:hover .quick-add-bar {
@@ -319,7 +397,7 @@
     margin-top: 0.2rem;
   }
 
-  /* Drawer CSS */
+  /* Smooth Cart Drawer Overlay */
   .cart-drawer-overlay {
     position: fixed;
     top: 0;
@@ -330,7 +408,7 @@
     z-index: 999;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.5s cubic-bezier(0.32, 0.72, 0, 1), visibility 0.5s cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   .cart-drawer-overlay.active {
@@ -338,25 +416,27 @@
     visibility: visible;
   }
 
+  /* Ultra-Smooth Slide Right-to-Left Cart Drawer */
   .cart-drawer {
     position: fixed;
     top: 0;
     right: 0;
-    width: 400px;
+    width: 420px;
     max-width: 90vw;
     height: 100vh;
     background: #ffffff;
     color: #111111;
     z-index: 1000;
-    transform: translateX(100%);
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translate3d(100%, 0, 0); /* Hardware accelerated 3D transform */
+    transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); /* Silky ease-out curve */
+    will-change: transform;
     display: flex;
     flex-direction: column;
-    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);
   }
 
   .cart-drawer.active {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 
   .cart-drawer__header {
@@ -387,18 +467,23 @@
     padding: 1.5rem;
   }
 
+  /* Cart Drawer Item Layout */
   .cart-item {
     display: flex;
     gap: 1rem;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
     border-bottom: 1px solid #eee;
+    position: relative;
+    align-items: flex-start;
   }
 
   .cart-item img {
-    width: 70px;
-    height: 90px;
+    width: 75px;
+    height: 95px;
     object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
   }
 
   .cart-item__details {
@@ -406,16 +491,83 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    padding-right: 0.5rem;
+  }
+
+  .cart-item__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.25rem;
+    width: 100%;
   }
 
   .cart-item__title {
+    font-family: 'Archivo', sans-serif;
     font-weight: 800;
     font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #111111;
+    line-height: 1.3;
+    flex: 1;
   }
 
   .cart-item__option {
+    font-family: 'Archivo', sans-serif;
     font-size: 0.75rem;
     color: #666;
+  }
+
+  .cart-item__price {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: #111111;
+    margin-top: 0.3rem;
+  }
+
+  /* Pill-Shaped Quantity Adjustment Box */
+  .cart-item__qty-selector {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
+    padding: 0.25rem 0.5rem;
+    width: 76px;
+    height: 30px;
+    box-sizing: border-box;
+    background: #ffffff;
+    flex-shrink: 0;
+  }
+
+  .cart-item__qty-btn {
+    background: none;
+    border: none;
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333333;
+    cursor: pointer;
+    padding: 0;
+    width: 18px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+  }
+
+  .cart-item__qty-btn:hover {
+    color: #000000;
+  }
+
+  .cart-item__qty-val {
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #111111;
+    text-align: center;
   }
 
   .cart-drawer__footer {
@@ -458,43 +610,81 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const cards = document.querySelectorAll('.product-card');
-    const drawer = document.getElementById('CartDrawer');
-    const overlay = document.getElementById('CartDrawerOverlay');
-    const closeBtn = document.getElementById('CartDrawerClose');
-
-    function openCartDrawer() {
-      drawer.classList.add('active');
-      overlay.classList.add('active');
-      fetchCartData();
-    }
-
-    function closeCartDrawer() {
-      drawer.classList.remove('active');
-      overlay.classList.remove('active');
-    }
-
-    closeBtn.addEventListener('click', closeCartDrawer);
-    overlay.addEventListener('click', closeCartDrawer);
+    let wishlist = JSON.parse(localStorage.getItem('shopify_wishlist')) || [];
 
     cards.forEach(card => {
       const productId = card.dataset.productId;
       const variants = JSON.parse(card.querySelector('.product-variants-json').textContent);
       const colorSwatches = card.querySelectorAll('.color-swatch');
       const sizeBtns = card.querySelectorAll('.size-btn');
-      const mainImg = card.querySelector('#ProductImage-' + productId);
+      const track = card.querySelector('.product-card__track');
+      const slideImgs = card.querySelectorAll('.product-card__slide-img');
+      const imageWrapper = card.querySelector('.product-card__image-wrapper');
+      const wishlistBtn = card.querySelector('.wishlist-btn');
       const colorLabel = card.querySelector('#SelectedColor-' + productId);
 
       let selectedColor = colorSwatches.length > 0 ? colorSwatches[0].dataset.color : null;
       let selectedSize = null;
+      let currentSlide = 0;
+      let isCooldown = false;
 
+      // Wishlist Persistence
+      if (wishlistBtn) {
+        if (wishlist.includes(productId)) {
+          wishlistBtn.classList.add('active');
+        }
+
+        wishlistBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (wishlist.includes(productId)) {
+            wishlist = wishlist.filter(id => id !== productId);
+            wishlistBtn.classList.remove('active');
+          } else {
+            wishlist.push(productId);
+            wishlistBtn.classList.add('active');
+          }
+
+          localStorage.setItem('shopify_wishlist', JSON.stringify(wishlist));
+        });
+      }
+
+      // Smooth Touchpad/Wheel Scroll
+      if (track && slideImgs.length > 1 && imageWrapper) {
+        imageWrapper.addEventListener('wheel', (e) => {
+          const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+          if (Math.abs(delta) < 15 || isCooldown) return;
+          e.preventDefault();
+
+          if (delta > 0 && currentSlide < slideImgs.length - 1) {
+            currentSlide++;
+          } else if (delta < 0 && currentSlide > 0) {
+            currentSlide--;
+          } else {
+            return;
+          }
+
+          track.style.transform = `translateX(-${currentSlide * 100}%)`;
+          isCooldown = true;
+          setTimeout(() => { isCooldown = false; }, 220);
+        }, { passive: false });
+      }
+
+      // Helper function to find matching variant cleanly
+      function findVariant(color, size) {
+        return variants.find(v => {
+          const matchesColor = !color || v.options.map(o => o.toLowerCase()).includes(color.toLowerCase());
+          const matchesSize = !size || v.options.map(o => o.toLowerCase()).includes(size.toLowerCase());
+          return matchesColor && matchesSize;
+        });
+      }
+
+      // Update Size Availability based on current color
       function updateSizeAvailability() {
         sizeBtns.forEach(btn => {
           const sizeVal = btn.dataset.size;
-          const matchingVariant = variants.find(v => {
-            const hasColor = !selectedColor || v.options.includes(selectedColor);
-            const hasSize = v.options.includes(sizeVal);
-            return hasColor && hasSize;
-          });
+          const matchingVariant = findVariant(selectedColor, sizeVal);
 
           if (!matchingVariant || !matchingVariant.available) {
             btn.classList.add('disabled');
@@ -504,7 +694,6 @@
         });
       }
 
-      // Initial check
       updateSizeAvailability();
 
       // Swatch Click Logic
@@ -515,21 +704,20 @@
           swatch.classList.add('active');
 
           selectedColor = swatch.dataset.color;
-
-          // Update text color label
           if (colorLabel) colorLabel.textContent = selectedColor;
 
-          // Swap Image to variant color image
           const newImgSrc = swatch.dataset.variantImg;
-          if (newImgSrc && mainImg) {
-            mainImg.src = newImgSrc;
+          if (newImgSrc && slideImgs.length > 0) {
+            slideImgs[0].src = newImgSrc;
+            currentSlide = 0;
+            if (track) track.style.transform = 'translateX(0%)';
           }
 
           updateSizeAvailability();
         });
       });
 
-      // Size Click Logic
+      // Size Click Logic & Add-to-Cart Trigger
       sizeBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
@@ -539,19 +727,18 @@
           btn.classList.add('active');
           selectedSize = btn.dataset.size;
 
-          const matchedVariant = variants.find(v => {
-            const hasColor = !selectedColor || v.options.includes(selectedColor);
-            const hasSize = v.options.includes(selectedSize);
-            return hasColor && hasSize;
-          });
+          const matchedVariant = findVariant(selectedColor, selectedSize);
 
           if (matchedVariant && matchedVariant.available) {
             addToCart(matchedVariant.id);
+          } else {
+            console.warn('Variant unavailable or not found for:', selectedColor, selectedSize);
           }
         });
       });
     });
 
+    // Add to Cart & Dispatch standard global theme events
     function addToCart(variantId) {
       fetch('/cart/add.js', {
         method: 'POST',
@@ -559,29 +746,29 @@
         body: JSON.stringify({ items: [{ id: variantId, quantity: 1 }] })
       })
       .then(res => res.json())
-      .then(() => openCartDrawer())
+      .then(cartData => {
+        // Dispatch multiple common event formats so standard drawer snippets pick it up
+        document.dispatchEvent(new CustomEvent('cart:open', {
+          bubbles: true,
+          detail: { variantId: variantId, cart: cartData }
+        }));
+
+        document.dispatchEvent(new CustomEvent('cart:refresh', {
+          bubbles: true,
+          detail: { cart: cartData }
+        }));
+
+        document.dispatchEvent(new CustomEvent('cart:updated', {
+          bubbles: true,
+          detail: { cart: cartData }
+        }));
+
+        // Dawn theme native drawer trigger support
+        if (window.Shopify && Shopify.theme && Shopify.theme.cart) {
+          document.querySelector('cart-drawer')?.open();
+        }
+      })
       .catch(err => console.error('Error adding to cart:', err));
-    }
-
-    function fetchCartData() {
-      fetch('/cart.js')
-        .then(res => res.json())
-        .then(cart => {
-          document.getElementById('CartDrawerCount').textContent = cart.item_count;
-          document.getElementById('CartDrawerSubtotal').textContent = (cart.total_price / 100).toLocaleString('en-US', { style: 'currency', currency: cart.currency });
-
-          const content = document.getElementById('CartDrawerContent');
-          content.innerHTML = cart.items.map(item => `
-            <div class="cart-item">
-              <img src="${item.image}" alt="${item.title}">
-              <div class="cart-item__details">
-                <span class="cart-item__title">${item.product_title}</span>
-                <span class="cart-item__option">${item.variant_options.join(' / ')}</span>
-                <span class="cart-item__price">${item.quantity} x ${(item.price / 100).toLocaleString('en-US', { style: 'currency', currency: cart.currency })}</span>
-              </div>
-            </div>
-          `).join('');
-        });
     }
   });
 </script>

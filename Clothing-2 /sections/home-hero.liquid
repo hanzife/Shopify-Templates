@@ -6,7 +6,7 @@
   elsif section.settings.video_url != blank
     assign video_src = section.settings.video_url
   else
-{% assign video_src = 'hero-video.webm' | asset_url %}
+    assign video_src = 'hero-video.webm' | asset_url
   endif
 
 %}

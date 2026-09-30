@@ -2,7 +2,7 @@
   The ONE logo. It starts centered over the hero, then docks into the header on scroll.
   Position and animation are driven by the script in theme.liquid.
 {%- endcomment -%}
-<a href="{{ routes.root_url }}" class="brand-logo" id="HeroMainLogo">VALOIS</a>
+<a href="{{ routes.root_url }}" class="brand-logo" id="HeroMainLogo">FOUND</a>
 
 <header class="site-header" id="SiteHeader">
   <div class="header__inner">
@@ -16,7 +16,7 @@
 
     <!-- Center slot: invisible target only, never displays anything -->
     <div class="header__logo-slot" id="HeaderLogoSlot" aria-hidden="true">
-      <span class="header__logo-text">VALOIS</span>
+      <span class="header__logo-text">FOUND</span>
     </div>
 
     <!-- Right: account and cart -->
@@ -27,12 +27,17 @@
         </a>
       {% endif %}
 
-      <a href="{{ routes.cart_url }}" class="header__icon-link" aria-label="Cart">
+      {%- comment -%} Updated to button with cart trigger {%- endcomment -%}
+      <button 
+        type="button" 
+        class="header__icon-link header__cart-trigger" 
+        id="HeaderCartTrigger"
+        aria-label="Open Cart">
         {% if cart.item_count > 0 %}
           <span class="cart-badge">{{ cart.item_count }}</span>
         {% endif %}
         {{ 'icon-cart.svg' | inline_asset_content }}
-      </a>
+      </button>
     </div>
 
   </div>
@@ -41,28 +46,28 @@
 {% stylesheet %}
   /* ---------- Header bar ---------- */
   .site-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 100;
-  padding: 1.25rem 2rem;
-  background: rgba(255, 255, 255, 0);
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0);
-  transition: background 0.45s cubic-bezier(0.7, 0, 0.2, 1),
-              backdrop-filter 0.45s cubic-bezier(0.7, 0, 0.2, 1),
-              -webkit-backdrop-filter 0.45s cubic-bezier(0.7, 0, 0.2, 1),
-              box-shadow 0.45s cubic-bezier(0.7, 0, 0.2, 1);
-}
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 1.25rem 2rem;
+    background: rgba(255, 255, 255, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0);
+    transition: background 0.45s cubic-bezier(0.7, 0, 0.2, 1),
+                backdrop-filter 0.45s cubic-bezier(0.7, 0, 0.2, 1),
+                -webkit-backdrop-filter 0.45s cubic-bezier(0.7, 0, 0.2, 1),
+                box-shadow 0.45s cubic-bezier(0.7, 0, 0.2, 1);
+  }
 
-.site-header.is-solid {
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-}
+  .site-header.is-solid {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  }
 
   .header__inner {
     display: grid;
@@ -132,11 +137,11 @@
     transform-origin: center;
     will-change: transform;
     transition: transform 0.55s cubic-bezier(0.7, 0, 0.2, 1),
-            color 0.4s ease;
+                color 0.4s ease;
   }
 
   .brand-logo.is-docked {
-      pointer-events: auto;
+    pointer-events: auto;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -152,6 +157,10 @@
   }
 
   .header__icon-link {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
     color: #ffffff;
     display: flex;
     align-items: center;
@@ -190,6 +199,45 @@
     color: #ffffff;
   }
 {% endstylesheet %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const cartTrigger = document.getElementById('HeaderCartTrigger');
+
+    if (cartTrigger) {
+      cartTrigger.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        // Dispatch all standard drawer event formats for maximum compatibility
+        document.dispatchEvent(new CustomEvent('cart:open', { bubbles: true }));
+        document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+
+        // Native Dawn cart-drawer fallback
+        if (window.Shopify && Shopify.theme && Shopify.theme.cart) {
+          document.querySelector('cart-drawer')?.open();
+        }
+      });
+    }
+  });
+
+  // Add product to cart and open drawer from anywhere
+  function addToCart(variantId) {
+    fetch('/cart/add.js', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: [{ id: variantId, quantity: 1 }] })
+    })
+    .then(res => res.json())
+    .then((cartData) => {
+      // Open cart drawer globally with cart data
+      document.dispatchEvent(new CustomEvent('cart:open', {
+        bubbles: true,
+        detail: { cart: cartData }
+      }));
+    })
+    .catch(err => console.error('Error adding to cart:', err));
+  }
+</script>
 
 {% schema %}
 {

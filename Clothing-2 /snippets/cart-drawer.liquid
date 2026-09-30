@@ -1,0 +1,98 @@
+{%- comment -%} snippets/cart-drawer.liquid {%- endcomment -%}
+<div class="cart-drawer-overlay" id="CartDrawerOverlay"></div>
+<div class="cart-drawer" id="CartDrawer">
+  <div class="cart-drawer__header">
+    <h3>Your cart (<span id="CartDrawerCount">0</span>)</h3>
+    <button type="button" class="cart-drawer__close" id="CartDrawerClose">&times;</button>
+  </div>
+  <div class="cart-drawer__content" id="CartDrawerContent"></div>
+  <div class="cart-drawer__footer">
+    <div class="cart-drawer__subtotal">
+      <span>Subtotal</span>
+      <strong id="CartDrawerSubtotal">$0.00</strong>
+    </div>
+    <a href="/checkout" class="cart-drawer__checkout-btn">CHECKOUT</a>
+    <a href="/cart" class="cart-drawer__view-cart-btn">VIEW CART</a>
+  </div>
+</div>
+
+<script>
+  (function() {
+    if (window.CartDrawerInitialized) return;
+    window.CartDrawerInitialized = true;
+
+    const drawer = document.getElementById('CartDrawer');
+    const overlay = document.getElementById('CartDrawerOverlay');
+    const closeBtn = document.getElementById('CartDrawerClose');
+
+    window.openCartDrawer = function() {
+      drawer.classList.add('active');
+      overlay.classList.add('active');
+      fetchCartData();
+    };
+
+    window.closeCartDrawer = function() {
+      drawer.classList.remove('active');
+      overlay.classList.remove('active');
+    };
+
+    closeBtn?.addEventListener('click', closeCartDrawer);
+    overlay?.addEventListener('click', closeCartDrawer);
+
+    // Listen globally for open events
+    document.addEventListener('cart:open', openCartDrawer);
+    document.addEventListener('cart:updated', fetchCartData);
+
+    function updateCartItemQuantity(lineKey, newQty) {
+      fetch('/cart/change.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: lineKey, quantity: newQty })
+      })
+      .then(res => res.json())
+      .then(() => fetchCartData())
+      .catch(err => console.error('Error updating quantity:', err));
+    }
+
+    function fetchCartData() {
+      fetch('/cart.js')
+        .then(res => res.json())
+        .then(cart => {
+          document.getElementById('CartDrawerCount').textContent = cart.item_count;
+          document.getElementById('CartDrawerSubtotal').textContent = 
+            (cart.total_price / 100).toLocaleString('en-US', { style: 'currency', currency: cart.currency });
+
+          const content = document.getElementById('CartDrawerContent');
+          if (cart.items.length === 0) {
+            content.innerHTML = '<p style="text-align:center; padding: 2rem 0; color:#666;">Your cart is empty.</p>';
+            return;
+          }
+
+          content.innerHTML = cart.items.map(item => `
+            <div class="cart-item" data-line-key="${item.key}">
+              <img src="${item.image}" alt="${item.title}">
+              <div class="cart-item__details">
+                <div class="cart-item__header">
+                  <span class="cart-item__title">${item.product_title}</span>
+                  <div class="cart-item__qty-selector">
+                    <button type="button" class="cart-item__qty-btn qty-minus" data-key="${item.key}" data-qty="${item.quantity - 1}">&minus;</button>
+                    <span class="cart-item__qty-val">${item.quantity}</span>
+                    <button type="button" class="cart-item__qty-btn qty-plus" data-key="${item.key}" data-qty="${item.quantity + 1}">&#43;</button>
+                  </div>
+                </div>
+                <span class="cart-item__option">${item.variant_options ? item.variant_options.join(' / ') : ''}</span>
+                <span class="cart-item__price">${(item.final_line_price / 100).toLocaleString('en-US', { style: 'currency', currency: cart.currency })}</span>
+              </div>
+            </div>
+          `).join('');
+
+          content.querySelectorAll('.cart-item__qty-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              updateCartItemQuantity(btn.dataset.key, parseInt(btn.dataset.qty, 10));
+            });
+          });
+        });
+    }
+  })();
+</script>
