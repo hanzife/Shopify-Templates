@@ -43,7 +43,7 @@
         padding: 0 !important;
       }
 
-      /* 1. Pin Hero Section */
+
       .shopify-section:has(#HeroSection),
       .shopify-section:has([data-section-type="hero"]) {
         position: sticky;
@@ -54,12 +54,17 @@
         will-change: transform;
       }
 
-      /* 2. Force solid background on ALL subsequent sections sliding over */
-      #MainContent .shopify-section:not(:has(#HeroSection)):not(:has([data-section-type="hero"])) {
+     #MainContent .shopify-section:not(:has(#HeroSection)):not(:has([data-section-type="hero"])) {
         position: relative;
         z-index: 2;
-        background-color: var(--gradient-background, #ffffff); /* CRITICAL: Prevents transparency overlap */
-        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08); /* Optional: Smooth visual separation shadow */
+        background-color: var(--gradient-background, #ffffff);
+        box-shadow: none !important;
+      }
+
+      /* 2. Target ONLY the section immediately following the Hero for the top shadow */
+      .shopify-section:has(#HeroSection) + .shopify-section,
+      .shopify-section:has([data-section-type="hero"]) + .shopify-section {
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08) !important;
       }
 
       /* Full bleed containers */
@@ -88,43 +93,39 @@
 
     {% render 'cart-drawer' %}
 
-    <script>
+<script>
   document.addEventListener('DOMContentLoaded', () => {
     const hero = document.getElementById('HeroSection');
     const header = document.getElementById('SiteHeader');
     const logo = document.getElementById('HeroMainLogo');
     const slot = document.getElementById('HeaderLogoSlot');
     const slotText = slot && slot.querySelector('.header__logo-text');
-    const nextSection = hero.closest('.shopify-section')?.nextElementSibling;
+    const nextSection = hero?.closest('.shopify-section')?.nextElementSibling;
 
     function updateSolid() {
-  if (!nextSection) return;
-  // Header "touches" the next section when that section's top reaches the header's bottom edge
-  const solid = nextSection.getBoundingClientRect().top <= header.offsetHeight;
-  header.classList.toggle('is-solid', solid);
-  logo.classList.toggle('is-solid', solid);
-}
-
+      if (!nextSection || !header) return;
+      // Header toggles when next section's top reaches header's bottom edge
+      const solid = nextSection.getBoundingClientRect().top <= header.offsetHeight;
+      header.classList.toggle('is-solid', solid);
+      if (logo) logo.classList.toggle('is-solid', solid);
+    }
 
     if (!hero || !header || !logo || !slot || !slotText) return;
 
-    const THRESHOLD = 24; // px scrolled before the logo docks
+    const THRESHOLD = 24; // px scrolled before logo docks
     let start = { x: 0, y: 0 };
     let dock = { x: 0, y: 0 };
     let scale = 0.2;
     let docked = null;
 
     function measure() {
-      // Start: exact center of the hero (hero is pinned at top:0)
       start.x = document.documentElement.clientWidth / 2;
       start.y = hero.offsetHeight / 2;
 
-      // Target: center of the invisible header slot
       const r = slot.getBoundingClientRect();
       dock.x = r.left + r.width / 2;
       dock.y = r.top + r.height / 2;
 
-      // Scale = header font size / hero font size
       const from = parseFloat(getComputedStyle(logo).fontSize);
       const to = parseFloat(getComputedStyle(slotText).fontSize);
       scale = to / from;
@@ -142,17 +143,33 @@
       logo.classList.toggle('is-docked', docked);
     }
 
+    // Initial setup
     logo.style.transition = 'none';
     measure();
     apply(true);
+    updateSolid();
+
     requestAnimationFrame(() => requestAnimationFrame(() => { logo.style.transition = ''; }));
 
     if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => { measure(); apply(true); });
+      document.fonts.ready.then(() => { 
+        measure(); 
+        apply(true); 
+        updateSolid();
+      });
     }
 
-    window.addEventListener('scroll', () => apply(false), { passive: true });
-    window.addEventListener('resize', () => { measure(); apply(true); });
+    // Scroll and resize listeners triggering both animations
+    window.addEventListener('scroll', () => {
+      apply(false);
+      updateSolid();
+    }, { passive: true });
+
+    window.addEventListener('resize', () => { 
+      measure(); 
+      apply(true); 
+      updateSolid();
+    });
   });
 </script>
 

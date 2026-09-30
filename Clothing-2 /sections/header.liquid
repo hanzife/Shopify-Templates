@@ -69,11 +69,11 @@
                 box-shadow 0.45s cubic-bezier(0.7, 0, 0.2, 1);
   }
 
-  .site-header.is-solid {
+ .site-header.is-solid {
     background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05); 
   }
 
   .header__inner {
@@ -239,7 +239,6 @@
     }
   });
 
-  // Add product to cart and open drawer from anywhere
   function addToCart(variantId) {
     fetch('/cart/add.js', {
       method: 'POST',

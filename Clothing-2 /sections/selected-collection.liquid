@@ -1,117 +1,214 @@
+{%- comment -%}
+  Selected Collections Section
+{%- endcomment -%}
+
 <section class="selected-collection-section">
   <div class="selected-collection-container">
-    {% comment %} Top Half: 2 Columns (50% / 50%) {% endcomment %}
+
+    {% comment %} TOP ROW: 2 Cards {% endcomment %}
     <div class="selected-collection-top">
-      {%- for block in section.blocks limit: 2 -%}
-        {%- assign collection = collections[block.settings.collection] -%}
-        {%- assign bg_image = block.settings.custom_image | default: collection.featured_image -%}
-        {%- assign title = block.settings.custom_title | default: collection.title -%}
-        
-        <a href="{{ collection.url | default: '#' }}" class="collection-card top-card" {{ block.shopify_attributes }}>
-          {%- if bg_image != blank -%}
-            <img 
-              src="{{ bg_image | image_url: width: 1200 }}" 
-              alt="{{ title | escape }}" 
-              loading="lazy" 
-              class="card-bg-img"
-            >
-          {%- else -%}
-            <div class="card-bg-placeholder"></div>
+      {%- if section.blocks.size > 0 -%}
+        {%- for block in section.blocks limit: 2 -%}
+          {%- assign collection = collections[block.settings.collection] -%}
+          {%- if collection == blank -%}
+            {%- assign collection = collections[forloop.index0] -%}
           {%- endif -%}
 
-          <div class="card-content">
-            <h2 class="card-title">{{ title }}</h2>
-            <span class="card-link-text">{{ block.settings.link_text }}</span>
-          </div>
-        </a>
-      {%- endfor -%}
+          {%- assign bg_image = block.settings.custom_image | default: collection.featured_image | default: collection.products.first.featured_image -%}
+          {%- assign title = block.settings.custom_title | default: collection.title | default: "Collection" -%}
+
+          <a href="{{ collection.url | default: '#' }}" class="collection-card top-card {% if forloop.first %}card-align-bottom-left{% else %}card-align-bottom-right{% endif %}" {{ block.shopify_attributes }}>
+            {%- if bg_image != blank -%}
+              <img 
+                src="{{ bg_image | image_url: width: 1200 }}" 
+                alt="{{ title | escape }}" 
+                loading="lazy" 
+                class="card-bg-img"
+              >
+            {%- else -%}
+              <div class="card-bg-placeholder"></div>
+            {%- endif -%}
+
+            <div class="card-content">
+              <h2 class="card-title">{{ title }}</h2>
+              <span class="card-link-text">{{ block.settings.link_text | default: "İNCELE." }}</span>
+            </div>
+          </a>
+        {%- endfor -%}
+      {%- else -%}
+        {%- for collection in collections limit: 2 -%}
+          {%- assign bg_image = collection.featured_image | default: collection.products.first.featured_image -%}
+          {%- assign title = collection.title -%}
+
+          <a href="{{ collection.url }}" class="collection-card top-card {% if forloop.first %}card-align-bottom-left{% else %}card-align-bottom-right{% endif %}">
+            {%- if bg_image != blank -%}
+              <img 
+                src="{{ bg_image | image_url: width: 1200 }}" 
+                alt="{{ title | escape }}" 
+                loading="lazy" 
+                class="card-bg-img"
+              >
+            {%- else -%}
+              <div class="card-bg-placeholder"></div>
+            {%- endif -%}
+
+            <div class="card-content">
+              <h2 class="card-title">{{ title }}</h2>
+              <span class="card-link-text">İNCELE.</span>
+            </div>
+          </a>
+        {%- endfor -%}
+      {%- endif -%}
     </div>
 
-    {% comment %} Bottom Half: 4 Columns (25% each) {% endcomment %}
+    {% comment %} BOTTOM ROW: 4 Cards {% endcomment %}
     <div class="selected-collection-bottom">
-      {%- for block in section.blocks offset: 2 limit: 4 -%}
-        {%- assign collection = collections[block.settings.collection] -%}
-        {%- assign bg_image = block.settings.custom_image | default: collection.featured_image -%}
-        {%- assign title = block.settings.custom_title | default: collection.title -%}
-
-        <a href="{{ collection.url | default: '#' }}" class="collection-card bottom-card" {{ block.shopify_attributes }}>
-          {%- if bg_image != blank -%}
-            <img 
-              src="{{ bg_image | image_url: width: 800 }}" 
-              alt="{{ title | escape }}" 
-              loading="lazy" 
-              class="card-bg-img"
-            >
-          {%- else -%}
-            <div class="card-bg-placeholder"></div>
+      {%- if section.blocks.size > 0 -%}
+        {%- for block in section.blocks offset: 2 limit: 4 -%}
+          {%- assign collection = collections[block.settings.collection] -%}
+          {%- if collection == blank -%}
+            {%- assign auto_index = forloop.index0 | plus: 2 -%}
+            {%- assign collection = collections[auto_index] -%}
           {%- endif -%}
 
-          <div class="card-content">
-            <h3 class="card-title">{{ title }}</h3>
-            <span class="card-link-text">{{ block.settings.link_text }}</span>
-          </div>
-        </a>
-      {%- endfor -%}
+          {%- assign bg_image = block.settings.custom_image | default: collection.featured_image | default: collection.products.first.featured_image -%}
+          {%- assign title = block.settings.custom_title | default: collection.title | default: "Collection" -%}
+
+          <a href="{{ collection.url | default: '#' }}" class="collection-card bottom-card card-align-top-left" {{ block.shopify_attributes }}>
+            {%- if bg_image != blank -%}
+              <img 
+                src="{{ bg_image | image_url: width: 800 }}" 
+                alt="{{ title | escape }}" 
+                loading="lazy" 
+                class="card-bg-img"
+              >
+            {%- else -%}
+              <div class="card-bg-placeholder"></div>
+            {%- endif -%}
+
+            <div class="card-content">
+              <h3 class="card-title">{{ title }}</h3>
+              <span class="card-link-text">{{ block.settings.link_text | default: "İNCELE." }}</span>
+            </div>
+          </a>
+        {%- endfor -%}
+      {%- else -%}
+        {%- for collection in collections offset: 2 limit: 4 -%}
+          {%- assign bg_image = collection.featured_image | default: collection.products.first.featured_image -%}
+          {%- assign title = collection.title -%}
+
+          <a href="{{ collection.url }}" class="collection-card bottom-card card-align-top-left">
+            {%- if bg_image != blank -%}
+              <img 
+                src="{{ bg_image | image_url: width: 800 }}" 
+                alt="{{ title | escape }}" 
+                loading="lazy" 
+                class="card-bg-img"
+              >
+            {%- else -%}
+              <div class="card-bg-placeholder"></div>
+            {%- endif -%}
+
+            <div class="card-content">
+              <h3 class="card-title">{{ title }}</h3>
+              <span class="card-link-text">İNCELE.</span>
+            </div>
+          </a>
+        {%- endfor -%}
+      {%- endif -%}
     </div>
+
   </div>
 </section>
 
 <style>
   .selected-collection-section {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    padding: 20px 0;
+    width: 100vw !important;
+    margin-left: calc(-50vw + 50%) !important;
+    padding: 4rem 0 6rem 0; 
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+    background: transparent;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
   }
 
   .selected-collection-container {
     width: 100%;
-    max-width: 1440px;
+    max-width: 1600px; 
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 0 15px;
+    gap: 6px; /* Reduced from 20px */
     box-sizing: border-box;
+    box-shadow: none !important;
+    border: none !important;
   }
 
-  /* Layout Grids */
-  .selected-collection-top {
+ .selected-collection-top {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    gap: 6px; /* Reduced from 20px */
   }
 
   .selected-collection-bottom {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    gap: 6px; /* Reduced from 20px */
   }
 
-  /* Common Card Styling */
   .collection-card {
     position: relative;
     display: flex;
-    align-items: flex-end;
-    justify-content: flex-end;
     text-decoration: none;
     overflow: hidden;
     background-color: #f4f4f4;
+    box-shadow: none !important;
+    border: none !important;
   }
 
   .top-card {
-    min-height: 400px;
+    min-height: 420px;
   }
 
   .bottom-card {
-    min-height: 300px;
+    min-height: 420px;
   }
 
-  /* Background Image */
+  /* AUTOMATIC POSITIONING BY CARD INDEX */
+
+  /* Card 1 (Top Left): Bottom-Left alignment, Left-to-Right text */
+  .card-align-bottom-left {
+    align-items: flex-end;
+    justify-content: flex-start;
+  }
+  .card-align-bottom-left .card-content {
+    text-align: left;
+  }
+
+  /* Card 2 (Top Right): Bottom-Right alignment, Right-to-Left text */
+  .card-align-bottom-right {
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+  .card-align-bottom-right .card-content {
+    text-align: right;
+  }
+
+  /* Cards 3–6 (Bottom 4 Cards): Top-Left alignment */
+  .card-align-top-left {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+  .card-align-top-left .card-content {
+    text-align: left;
+  }
+
   .card-bg-img {
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -130,12 +227,10 @@
     z-index: 1;
   }
 
-  /* Typography & Text Positioning */
   .card-content {
     position: relative;
     z-index: 2;
     padding: 24px;
-    text-align: right;
   }
 
   .card-title {
@@ -149,7 +244,7 @@
   }
 
   .bottom-card .card-title {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
   }
 
   .card-link-text {
@@ -162,10 +257,15 @@
     letter-spacing: 0.05em;
   }
 
-  /* Responsive Adjustments */
   @media (max-width: 990px) {
     .selected-collection-bottom {
       grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    .selected-collection-section {
+      padding: 3rem 0 4rem 0; /* Left and right padding set to 0 */
     }
   }
 
@@ -180,7 +280,7 @@
     }
 
     .bottom-card {
-      min-height: 250px;
+      min-height: 240px;
     }
   }
 </style>
@@ -198,19 +298,18 @@
         {
           "type": "collection",
           "id": "collection",
-          "label": "Select Collection"
+          "label": "Select Collection",
+          "info": "Optional: Select a collection to override position order."
         },
         {
           "type": "image_picker",
           "id": "custom_image",
-          "label": "Custom Background Image",
-          "info": "Overrides default collection featured image"
+          "label": "Custom Image"
         },
         {
           "type": "text",
           "id": "custom_title",
-          "label": "Custom Title",
-          "info": "Overrides default collection title"
+          "label": "Custom Title"
         },
         {
           "type": "text",
@@ -225,30 +324,12 @@
     {
       "name": "Selected Collections Grid",
       "blocks": [
-        {
-          "type": "collection_card",
-          "settings": {
-            "link_text": "İNCELE."
-          }
-        },
-        {
-          "type": "collection_card",
-          "settings": {
-            "link_text": "İNCELE."
-          }
-        },
-        {
-          "type": "collection_card"
-        },
-        {
-          "type": "collection_card"
-        },
-        {
-          "type": "collection_card"
-        },
-        {
-          "type": "collection_card"
-        }
+        { "type": "collection_card" },
+        { "type": "collection_card" },
+        { "type": "collection_card" },
+        { "type": "collection_card" },
+        { "type": "collection_card" },
+        { "type": "collection_card" }
       ]
     }
   ]
