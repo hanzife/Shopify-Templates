@@ -19,15 +19,22 @@
       <span class="header__logo-text">FOUND</span>
     </div>
 
-    <!-- Right: account and cart -->
+    <!-- Right: wishlist, account, and cart -->
     <div class="header__icons">
+      {%- comment -%} Wishlist Icon (placed before account icon) {%- endcomment -%}
+      <a href="/pages/wishlist" class="header__icon-link" aria-label="Wishlist">
+        <svg class="header__wishlist-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </a>
+
       {% if shop.customer_accounts_enabled %}
         <a href="{{ routes.account_url }}" class="header__icon-link" aria-label="Account">
           {{ 'icon-account.svg' | inline_asset_content }}
         </a>
       {% endif %}
 
-      {%- comment -%} Updated to button with cart trigger {%- endcomment -%}
+      {%- comment -%} Cart Drawer Trigger {%- endcomment -%}
       <button 
         type="button" 
         class="header__icon-link header__cart-trigger" 
@@ -165,7 +172,12 @@
     display: flex;
     align-items: center;
     position: relative;
-    transition: color 0.4s ease;
+    transition: color 0.4s ease, transform 0.2s ease;
+    text-decoration: none;
+  }
+
+  .header__icon-link:hover {
+    transform: scale(1.08);
   }
 
   .site-header.is-solid .header__icon-link {
@@ -175,7 +187,14 @@
   .header__icon-link svg {
     width: 1.35rem;
     height: 1.35rem;
+  }
+
+  .header__icon-link svg:not(.header__wishlist-icon) {
     fill: currentColor;
+  }
+
+  .header__wishlist-icon {
+    stroke: currentColor;
   }
 
   .cart-badge {
@@ -208,7 +227,7 @@
       cartTrigger.addEventListener('click', (e) => {
         e.preventDefault();
 
-        // Dispatch all standard drawer event formats for maximum compatibility
+        // Dispatch standard drawer event formats
         document.dispatchEvent(new CustomEvent('cart:open', { bubbles: true }));
         document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
 

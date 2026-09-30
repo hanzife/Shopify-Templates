@@ -1,0 +1,256 @@
+<section class="selected-collection-section">
+  <div class="selected-collection-container">
+    {% comment %} Top Half: 2 Columns (50% / 50%) {% endcomment %}
+    <div class="selected-collection-top">
+      {%- for block in section.blocks limit: 2 -%}
+        {%- assign collection = collections[block.settings.collection] -%}
+        {%- assign bg_image = block.settings.custom_image | default: collection.featured_image -%}
+        {%- assign title = block.settings.custom_title | default: collection.title -%}
+        
+        <a href="{{ collection.url | default: '#' }}" class="collection-card top-card" {{ block.shopify_attributes }}>
+          {%- if bg_image != blank -%}
+            <img 
+              src="{{ bg_image | image_url: width: 1200 }}" 
+              alt="{{ title | escape }}" 
+              loading="lazy" 
+              class="card-bg-img"
+            >
+          {%- else -%}
+            <div class="card-bg-placeholder"></div>
+          {%- endif -%}
+
+          <div class="card-content">
+            <h2 class="card-title">{{ title }}</h2>
+            <span class="card-link-text">{{ block.settings.link_text }}</span>
+          </div>
+        </a>
+      {%- endfor -%}
+    </div>
+
+    {% comment %} Bottom Half: 4 Columns (25% each) {% endcomment %}
+    <div class="selected-collection-bottom">
+      {%- for block in section.blocks offset: 2 limit: 4 -%}
+        {%- assign collection = collections[block.settings.collection] -%}
+        {%- assign bg_image = block.settings.custom_image | default: collection.featured_image -%}
+        {%- assign title = block.settings.custom_title | default: collection.title -%}
+
+        <a href="{{ collection.url | default: '#' }}" class="collection-card bottom-card" {{ block.shopify_attributes }}>
+          {%- if bg_image != blank -%}
+            <img 
+              src="{{ bg_image | image_url: width: 800 }}" 
+              alt="{{ title | escape }}" 
+              loading="lazy" 
+              class="card-bg-img"
+            >
+          {%- else -%}
+            <div class="card-bg-placeholder"></div>
+          {%- endif -%}
+
+          <div class="card-content">
+            <h3 class="card-title">{{ title }}</h3>
+            <span class="card-link-text">{{ block.settings.link_text }}</span>
+          </div>
+        </a>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+
+<style>
+  .selected-collection-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+  }
+
+  .selected-collection-container {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 15px;
+    box-sizing: border-box;
+  }
+
+  /* Layout Grids */
+  .selected-collection-top {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .selected-collection-bottom {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  /* Common Card Styling */
+  .collection-card {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    text-decoration: none;
+    overflow: hidden;
+    background-color: #f4f4f4;
+  }
+
+  .top-card {
+    min-height: 400px;
+  }
+
+  .bottom-card {
+    min-height: 300px;
+  }
+
+  /* Background Image */
+  .card-bg-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    transition: transform 0.4s ease;
+  }
+
+  .collection-card:hover .card-bg-img {
+    transform: scale(1.03);
+  }
+
+  .card-bg-placeholder {
+    position: absolute;
+    inset: 0;
+    background-color: #e5e5e5;
+    z-index: 1;
+  }
+
+  /* Typography & Text Positioning */
+  .card-content {
+    position: relative;
+    z-index: 2;
+    padding: 24px;
+    text-align: right;
+  }
+
+  .card-title {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #000000;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .bottom-card .card-title {
+    font-size: 1.5rem;
+  }
+
+  .card-link-text {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #444444;
+    letter-spacing: 0.05em;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 990px) {
+    .selected-collection-bottom {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 576px) {
+    .selected-collection-top,
+    .selected-collection-bottom {
+      grid-template-columns: 1fr;
+    }
+
+    .top-card {
+      min-height: 300px;
+    }
+
+    .bottom-card {
+      min-height: 250px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Selected Collections",
+  "max_blocks": 6,
+  "settings": [],
+  "blocks": [
+    {
+      "type": "collection_card",
+      "name": "Collection Card",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Select Collection"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_image",
+          "label": "Custom Background Image",
+          "info": "Overrides default collection featured image"
+        },
+        {
+          "type": "text",
+          "id": "custom_title",
+          "label": "Custom Title",
+          "info": "Overrides default collection title"
+        },
+        {
+          "type": "text",
+          "id": "link_text",
+          "label": "Link Text",
+          "default": "İNCELE."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Selected Collections Grid",
+      "blocks": [
+        {
+          "type": "collection_card",
+          "settings": {
+            "link_text": "İNCELE."
+          }
+        },
+        {
+          "type": "collection_card",
+          "settings": {
+            "link_text": "İNCELE."
+          }
+        },
+        {
+          "type": "collection_card"
+        },
+        {
+          "type": "collection_card"
+        },
+        {
+          "type": "collection_card"
+        },
+        {
+          "type": "collection_card"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -9,10 +9,17 @@
       "settings": {
         "title": "Signature Collection"
       }
+    },
+    "selected_collection": {
+      "type": "selected-collection",
+      "settings": {
+        "title": "Featured Collection"
+      }
     }
   },
   "order": [
     "hero",
-    "featured_products"
+    "featured_products",
+    "selected_collection"
   ]
 }
