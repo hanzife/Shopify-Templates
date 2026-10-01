@@ -129,16 +129,44 @@
     const nextSection = hero?.closest('.shopify-section')?.nextElementSibling;
 
     function updateSolid() {
+      if (!hero) {
+        // Force solid state on pages without a hero (Collections, Pages, Cart, etc.)
+        header.classList.add('is-solid');
+        if (logo) logo.classList.add('is-solid');
+        return;
+      }
       if (!nextSection || !header) return;
-      // Header toggles when next section's top reaches header's bottom edge
       const solid = nextSection.getBoundingClientRect().top <= header.offsetHeight;
       header.classList.toggle('is-solid', solid);
       if (logo) logo.classList.toggle('is-solid', solid);
     }
 
-    if (!hero || !header || !logo || !slot || !slotText) return;
+    if (!header || !logo || !slot || !slotText) return;
 
-    const THRESHOLD = 24; // px scrolled before logo docks
+    // If there is no hero section at all, dock the logo immediately
+    if (!hero) {
+      document.documentElement.classList.add('pp-header-adapt');
+      header.classList.add('is-solid');
+      logo.classList.add('is-solid');
+      
+      const dockInstant = () => {
+        logo.style.transition = 'none';
+        const r = slot.getBoundingClientRect();
+        const from = parseFloat(getComputedStyle(logo).fontSize);
+        const to = parseFloat(getComputedStyle(slotText).fontSize);
+        logo.style.setProperty('--logo-x', r.left + r.width / 2 + 'px');
+        logo.style.setProperty('--logo-y', r.top + r.height / 2 + 'px');
+        logo.style.setProperty('--logo-scale', to / from);
+        logo.classList.add('is-docked');
+        requestAnimationFrame(() => requestAnimationFrame(() => { logo.style.transition = ''; }));
+      };
+      dockInstant();
+      window.addEventListener('resize', dockInstant);
+      return; // Exit script early since we don't need scroll-tracking for hero animations
+    }
+
+    // --- Original Hero Scroll Animation Logic ---
+    const THRESHOLD = 24;
     let start = { x: 0, y: 0 };
     let dock = { x: 0, y: 0 };
     let scale = 0.2;
@@ -169,7 +197,6 @@
       logo.classList.toggle('is-docked', docked);
     }
 
-    // Initial setup
     logo.style.transition = 'none';
     measure();
     apply(true);
@@ -185,7 +212,6 @@
       });
     }
 
-    // Scroll and resize listeners triggering both animations
     window.addEventListener('scroll', () => {
       apply(false);
       updateSolid();
