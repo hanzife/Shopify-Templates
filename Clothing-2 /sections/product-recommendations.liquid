@@ -1,0 +1,727 @@
+{%- comment -%}
+  Goes Well With — horizontal product slider
+  - Random products from the whole store (no collection needed)
+  - Color swatches + quick-add size picker + cart event triggers (same as Featured Products)
+  - Black arrows jump one "page" (4 products on desktop) with ease-in-out
+{%- endcomment -%}
+
+{%- assign current_product_id = product.id -%}
+{%- assign max_products = section.settings.products_to_show | default: 10 -%}
+{%- assign total_products = collections.all.products_count -%}
+{%- assign random_offset = 0 -%}
+{%- assign spread = total_products | minus: max_products -%}
+{%- if spread > 0 -%}
+  {%- assign now_seconds = 'now' | date: '%s' | plus: 0 -%}
+  {%- assign random_offset = now_seconds | modulo: spread -%}
+{%- endif -%}
+
+<section class="gww" id="gww-{{ section.id }}" data-gww>
+  <div class="gww__header">
+    <h2 class="gww__title">{{ section.settings.title | escape }}</h2>
+  </div>
+
+  <div class="gww__wrap">
+    <button type="button" class="gww__arrow gww__arrow--prev" aria-label="Previous products" data-gww-prev>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </button>
+
+    <div class="gww__viewport" data-gww-viewport>
+      <div class="gww__track" data-gww-track>
+        {%- for product in collections.all.products offset: random_offset limit: max_products -%}
+          {%- if product.id == current_product_id -%}{%- continue -%}{%- endif -%}
+          <div class="gww-card" data-product-id="{{ product.id }}">
+            <div class="gww-card__image-wrapper">
+
+              {%- comment -%} Wishlist Heart Button {%- endcomment -%}
+              <button
+                type="button"
+                class="gww-wishlist"
+                data-product-id="{{ product.id }}"
+                aria-label="Add to Wishlist">
+                <svg class="gww-heart" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              </button>
+
+              <a href="{{ product.url }}" class="gww-card__image-link" draggable="false">
+                {%- if product.featured_image -%}
+                  <img
+                    src="{{ product.featured_image | image_url: width: 800 }}"
+                    alt="{{ product.featured_image.alt | escape }}"
+                    loading="lazy"
+                    draggable="false"
+                    class="gww-card__img">
+                {%- else -%}
+                  <div class="gww-card__placeholder">
+                    {{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}
+                  </div>
+                {%- endif -%}
+              </a>
+
+              {%- comment -%} Quick Add Hover Bar {%- endcomment -%}
+              <div class="gww-quick">
+                <span class="gww-quick__title">QUICK ADD</span>
+                <div class="gww-quick__sizes">
+                  {%- for option in product.options_with_values -%}
+                    {%- assign downcased_option = option.name | downcase -%}
+                    {%- if downcased_option contains 'size' -%}
+                      {%- for value in option.values -%}
+                        <button
+                          type="button"
+                          class="gww-size"
+                          data-size="{{ value | escape }}">
+                          {{ value }}
+                        </button>
+                      {%- endfor -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+                </div>
+              </div>
+            </div>
+
+            {%- comment -%} Color Swatches {%- endcomment -%}
+            <div class="gww-card__swatches">
+              {%- for option in product.options_with_values -%}
+                {%- assign downcased_option = option.name | downcase -%}
+                {%- if downcased_option contains 'color' or downcased_option contains 'colour' -%}
+                  {%- for value in option.values -%}
+                    {%- assign variant_image_url = '' -%}
+                    {%- for variant in product.variants -%}
+                      {%- if variant.options contains value and variant.featured_image != blank -%}
+                        {%- assign variant_image_url = variant.featured_image | image_url: width: 800 -%}
+                        {%- break -%}
+                      {%- endif -%}
+                    {%- endfor -%}
+
+                    <button
+                      type="button"
+                      class="gww-swatch{% if forloop.first %} active{% endif %}"
+                      data-color="{{ value | escape }}"
+                      data-variant-img="{{ variant_image_url }}"
+                      title="{{ value | escape }}"
+                      style="background-color: {{ value | handle }};">
+                    </button>
+                  {%- endfor -%}
+                {%- endif -%}
+              {%- endfor -%}
+            </div>
+
+            {%- comment -%} Product Details {%- endcomment -%}
+            <div class="gww-card__info">
+              <h3 class="gww-card__title">{{ product.title }}</h3>
+              <span class="gww-card__category">{{ product.type }}</span>
+              <span class="gww-card__color" data-gww-color-label>
+                {%- for option in product.options_with_values -%}
+                  {%- assign downcased_option = option.name | downcase -%}
+                  {%- if downcased_option contains 'color' or downcased_option contains 'colour' -%}
+                    {{ option.values.first }}
+                  {%- endif -%}
+                {%- endfor -%}
+              </span>
+              <span class="gww-card__price">{{ product.price | money }}</span>
+            </div>
+
+            <script type="application/json" class="gww-variants-json">
+              {{ product.variants | json }}
+            </script>
+          </div>
+        {%- endfor -%}
+      </div>
+    </div>
+
+    <button type="button" class="gww__arrow gww__arrow--next" aria-label="Next products" data-gww-next>
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </button>
+  </div>
+</section>
+
+{% stylesheet %}
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&display=swap');
+
+  .gww {
+    --gww-gap: 1.5rem;
+    --gww-per-view: 4;
+    position: relative;
+    z-index: 10;
+    width: 100vw !important;
+    margin-left: calc(-50vw + 50%) !important;
+    background-color: #ffffff;
+    color: #111111;
+    padding: 4rem 3rem 5rem 3rem;
+    box-sizing: border-box;
+  }
+
+  .gww__header {
+    text-align: left;
+    margin-bottom: 2rem;
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .gww__title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 4vw, 3rem);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    text-align: left;
+    margin: 0;
+    color: #111111;
+  }
+
+  .gww__wrap {
+    position: relative;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* Horizontal scroll area (native scroll + drag/touch) */
+  .gww__viewport {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    /* room for card hover shadow/lift so it is not clipped */
+    padding: 1rem 0 2rem;
+    margin: -1rem 0 -2rem;
+  }
+
+  .gww__viewport::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gww__viewport.is-animating {
+    scroll-snap-type: none;
+  }
+
+  .gww__track {
+    display: flex;
+    gap: var(--gww-gap);
+  }
+
+  @media screen and (max-width: 1024px) {
+    .gww { --gww-per-view: 2; }
+  }
+
+  @media screen and (max-width: 600px) {
+    .gww {
+      --gww-gap: 0.75rem;
+      --gww-per-view: 2;
+      padding: 3rem 1rem 4rem 1rem;
+    }
+  }
+
+  /* Card */
+  .gww-card {
+    flex: 0 0 calc((100% - (var(--gww-per-view) - 1) * var(--gww-gap)) / var(--gww-per-view));
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 0.75rem;
+    box-sizing: border-box;
+    min-width: 0;
+    transition: box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .gww-card:hover {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+  }
+
+  .gww-card__image-wrapper {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background-color: #f6f6f6;
+    margin-bottom: 0.75rem;
+    position: relative;
+    border-radius: 6px;
+  }
+
+  .gww-card__image-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .gww-card__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  /* Wishlist */
+  .gww-wishlist {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    color: #111111;
+    padding: 0;
+  }
+
+  .gww-wishlist:hover {
+    transform: scale(1.1);
+    background: #ffffff;
+  }
+
+  .gww-wishlist.active {
+    color: #ff3b30;
+  }
+
+  .gww-wishlist.active .gww-heart {
+    fill: #ff3b30;
+    stroke: #ff3b30;
+  }
+
+  /* Quick add */
+  .gww-quick {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #ffffff;
+    padding: 0.85rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+    border-top: 1px solid #f0f0f0;
+    z-index: 5;
+  }
+
+  .gww-card__image-wrapper:hover .gww-quick {
+    transform: translateY(0);
+  }
+
+  .gww-quick__title {
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #111111;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .gww-quick__sizes {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .gww-size {
+    background: #f8f8f8;
+    border: 1px solid #e2e2e2;
+    color: #111111;
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 38px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .gww-size:hover:not(.disabled) {
+    border-color: #111111;
+    background: #111111;
+    color: #ffffff;
+  }
+
+  .gww-size.active {
+    background: #111111;
+    color: #ffffff;
+    border-color: #111111;
+  }
+
+  .gww-size.disabled {
+    opacity: 0.35;
+    text-decoration: line-through;
+    cursor: not-allowed;
+    background: #f1f1f1;
+    border-color: #e5e5e5;
+  }
+
+  /* Swatches */
+  .gww-card__swatches {
+    display: flex;
+    gap: 0.45rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .gww-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    padding: 0;
+  }
+
+  .gww-swatch.active {
+    border-color: #111111;
+    box-shadow: 0 0 0 1px #111111;
+  }
+
+  /* Info */
+  .gww-card__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .gww-card__title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin: 0;
+    color: #111111;
+  }
+
+  .gww-card__category,
+  .gww-card__color {
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.8rem;
+    color: #666666;
+  }
+
+  .gww-card__price {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #111111;
+    margin-top: 0.2rem;
+  }
+
+  /* Black arrows */
+  .gww__arrow {
+    position: absolute;
+    top: 40%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    background: #000000;
+    color: #ffffff;
+    border: none;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 20;
+    padding: 0;
+    transition: opacity 0.3s ease, background-color 0.2s ease;
+  }
+
+  .gww__arrow:hover {
+    background: #222222;
+  }
+
+  .gww__arrow--prev { left: 1rem; }
+  .gww__arrow--next { right: 1rem; }
+
+  .gww__arrow.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @media screen and (max-width: 600px) {
+    .gww__arrow {
+      width: 36px;
+      height: 36px;
+    }
+    .gww__arrow--prev { left: 0.25rem; }
+    .gww__arrow--next { right: 0.25rem; }
+  }
+{% endstylesheet %}
+
+<script>
+  (function () {
+    const root = document.getElementById('gww-{{ section.id }}');
+    if (!root) return;
+
+    const viewport = root.querySelector('[data-gww-viewport]');
+    const track = root.querySelector('[data-gww-track]');
+    const prevBtn = root.querySelector('[data-gww-prev]');
+    const nextBtn = root.querySelector('[data-gww-next]');
+
+    // ---------- Random order on every page load (works even with cached HTML) ----------
+    const allCards = Array.from(track.children);
+    for (let i = allCards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allCards[i], allCards[j]] = [allCards[j], allCards[i]];
+    }
+    allCards.forEach(c => track.appendChild(c));
+
+    let wishlist = [];
+    try { wishlist = JSON.parse(localStorage.getItem('shopify_wishlist')) || []; } catch (e) {}
+
+    // ---------- Per-card logic (same as Featured Products) ----------
+    allCards.forEach(card => {
+      const productId = card.dataset.productId;
+      const variants = JSON.parse(card.querySelector('.gww-variants-json').textContent);
+      const colorSwatches = card.querySelectorAll('.gww-swatch');
+      const sizeBtns = card.querySelectorAll('.gww-size');
+      const img = card.querySelector('.gww-card__img');
+      const wishlistBtn = card.querySelector('.gww-wishlist');
+      const colorLabel = card.querySelector('[data-gww-color-label]');
+
+      let selectedColor = colorSwatches.length > 0 ? colorSwatches[0].dataset.color : null;
+      let selectedSize = null;
+
+      // Wishlist
+      if (wishlistBtn) {
+        if (wishlist.includes(productId)) wishlistBtn.classList.add('active');
+
+        wishlistBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (wishlist.includes(productId)) {
+            wishlist = wishlist.filter(id => id !== productId);
+            wishlistBtn.classList.remove('active');
+          } else {
+            wishlist.push(productId);
+            wishlistBtn.classList.add('active');
+          }
+          try { localStorage.setItem('shopify_wishlist', JSON.stringify(wishlist)); } catch (e) {}
+        });
+      }
+
+      function findVariant(color, size) {
+        return variants.find(v => {
+          const opts = v.options.map(o => o.toLowerCase());
+          const matchesColor = !color || opts.includes(color.toLowerCase());
+          const matchesSize = !size || opts.includes(size.toLowerCase());
+          return matchesColor && matchesSize;
+        });
+      }
+
+      function updateSizeAvailability() {
+        sizeBtns.forEach(btn => {
+          const matchingVariant = findVariant(selectedColor, btn.dataset.size);
+          if (!matchingVariant || !matchingVariant.available) {
+            btn.classList.add('disabled');
+          } else {
+            btn.classList.remove('disabled');
+          }
+        });
+      }
+
+      updateSizeAvailability();
+
+      // Swatches
+      colorSwatches.forEach(swatch => {
+        swatch.addEventListener('click', (e) => {
+          e.preventDefault();
+          colorSwatches.forEach(s => s.classList.remove('active'));
+          swatch.classList.add('active');
+
+          selectedColor = swatch.dataset.color;
+          if (colorLabel) colorLabel.textContent = selectedColor;
+
+          const newImgSrc = swatch.dataset.variantImg;
+          if (newImgSrc && img) img.src = newImgSrc;
+
+          updateSizeAvailability();
+        });
+      });
+
+      // Sizes -> add to cart
+      sizeBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (btn.classList.contains('disabled')) return;
+
+          sizeBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          selectedSize = btn.dataset.size;
+
+          const matchedVariant = findVariant(selectedColor, selectedSize);
+          if (matchedVariant && matchedVariant.available) {
+            addToCart(matchedVariant.id);
+          } else {
+            console.warn('Variant unavailable or not found for:', selectedColor, selectedSize);
+          }
+        });
+      });
+    });
+
+    // ---------- Add to cart + theme events ----------
+    function addToCart(variantId) {
+      fetch('/cart/add.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: [{ id: variantId, quantity: 1 }] })
+      })
+      .then(res => res.json())
+      .then(cartData => {
+        document.dispatchEvent(new CustomEvent('cart:open', {
+          bubbles: true,
+          detail: { variantId: variantId, cart: cartData }
+        }));
+
+        document.dispatchEvent(new CustomEvent('cart:refresh', {
+          bubbles: true,
+          detail: { cart: cartData }
+        }));
+
+        document.dispatchEvent(new CustomEvent('cart:updated', {
+          bubbles: true,
+          detail: { cart: cartData }
+        }));
+
+        if (window.Shopify && Shopify.theme && Shopify.theme.cart) {
+          document.querySelector('cart-drawer')?.open();
+        }
+      })
+      .catch(err => console.error('Error adding to cart:', err));
+    }
+
+    // ---------- Slider: arrows jump a full "page" with ease-in-out ----------
+    let rafId = null;
+
+    function easeInOutCubic(p) {
+      return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+    }
+
+    function cancelAnimation() {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+        viewport.classList.remove('is-animating');
+      }
+    }
+
+    function animateTo(target) {
+      cancelAnimation();
+      const start = viewport.scrollLeft;
+      const dist = target - start;
+      if (Math.abs(dist) < 1) return;
+
+      const duration = 850;
+      const t0 = performance.now();
+      viewport.classList.add('is-animating');
+
+      function step(now) {
+        const p = Math.min((now - t0) / duration, 1);
+        viewport.scrollLeft = start + dist * easeInOutCubic(p);
+        if (p < 1) {
+          rafId = requestAnimationFrame(step);
+        } else {
+          rafId = null;
+          viewport.classList.remove('is-animating');
+          updateArrows();
+        }
+      }
+      rafId = requestAnimationFrame(step);
+    }
+
+    function getMetrics() {
+      const cards = track.children;
+      const first = cards[0];
+      const second = cards[1];
+      const stepWidth = second ? second.offsetLeft - first.offsetLeft : first.offsetWidth;
+      const perView = Math.max(1, Math.round(viewport.clientWidth / stepWidth));
+      const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+      return { stepWidth, perView, maxScroll };
+    }
+
+    function jump(direction) {
+      if (!track.children.length) return;
+      const { stepWidth, perView, maxScroll } = getMetrics();
+      const currentIndex = Math.round(viewport.scrollLeft / stepWidth);
+      let target = (currentIndex + direction * perView) * stepWidth;
+      target = Math.max(0, Math.min(target, maxScroll));
+      animateTo(target);
+    }
+
+    function updateArrows() {
+      const { maxScroll } = getMetrics();
+      prevBtn.classList.toggle('is-hidden', viewport.scrollLeft <= 2);
+      nextBtn.classList.toggle('is-hidden', viewport.scrollLeft >= maxScroll - 2);
+    }
+
+    // Keep arrows vertically centered on the product image
+    function positionArrows() {
+      const firstImage = track.querySelector('.gww-card__image-wrapper');
+      if (!firstImage) return;
+      const wrapRect = root.querySelector('.gww__wrap').getBoundingClientRect();
+      const imgRect = firstImage.getBoundingClientRect();
+      const centerY = imgRect.top - wrapRect.top + imgRect.height / 2;
+      prevBtn.style.top = centerY + 'px';
+      nextBtn.style.top = centerY + 'px';
+    }
+
+    prevBtn.addEventListener('click', () => jump(-1));
+    nextBtn.addEventListener('click', () => jump(1));
+
+    // User input takes over from any running animation
+    ['wheel', 'touchstart', 'pointerdown'].forEach(evt => {
+      viewport.addEventListener(evt, cancelAnimation, { passive: true });
+    });
+
+    // Trackpad / shift-wheel horizontal scroll works natively; vertical wheel still scrolls the page
+    viewport.addEventListener('scroll', updateArrows, { passive: true });
+    window.addEventListener('resize', () => { positionArrows(); updateArrows(); });
+    window.addEventListener('load', () => { positionArrows(); updateArrows(); });
+
+    positionArrows();
+    updateArrows();
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Goes Well With",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Heading",
+      "default": "Goes well with..."
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "label": "Number of products",
+      "min": 4,
+      "max": 16,
+      "step": 1,
+      "default": 10
+    }
+  ],
+  "presets": [
+    {
+      "name": "Goes Well With"
+    }
+  ]
+}
+{% endschema %}

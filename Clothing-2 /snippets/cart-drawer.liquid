@@ -1,9 +1,17 @@
-{%- comment -%} snippets/cart-drawer.liquid {%- endcomment -%}
-<div class="cart-drawer-overlay" id="CartDrawerOverlay"></div>
-<div class="cart-drawer" id="CartDrawer">
+{%- comment -%}
+  snippets/cart-drawer.liquid  (REPLACE THE WHOLE FILE)
+
+  Now fully self-contained: the drawer CSS used to live inside the
+  featured-products section stylesheet, so on any page without that section
+  (like the product page) the drawer was unstyled and never visibly opened.
+  The drawer sits above the header (header = 900/901, overlay = 1000, drawer = 1001).
+{%- endcomment -%}
+
+<div class="cart-drawer-overlay" id="CartDrawerOverlay" data-global-drawer></div>
+<div class="cart-drawer" id="CartDrawer" data-global-drawer aria-hidden="true">
   <div class="cart-drawer__header">
     <h3>Your cart (<span id="CartDrawerCount">0</span>)</h3>
-    <button type="button" class="cart-drawer__close" id="CartDrawerClose">&times;</button>
+    <button type="button" class="cart-drawer__close" id="CartDrawerClose" aria-label="Close cart">&times;</button>
   </div>
   <div class="cart-drawer__content" id="CartDrawerContent"></div>
   <div class="cart-drawer__footer">
@@ -16,28 +24,266 @@
   </div>
 </div>
 
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&display=swap');
+
+  /* Overlay */
+  .cart-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s cubic-bezier(0.32, 0.72, 0, 1), visibility 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .cart-drawer-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Drawer */
+  .cart-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 420px;
+    max-width: 90vw;
+    height: 100vh;
+    height: 100dvh;
+    background: #ffffff;
+    color: #111111;
+    z-index: 1001;
+    transform: translate3d(100%, 0, 0);
+    transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);
+    visibility: hidden;
+  }
+
+  .cart-drawer.active {
+    transform: translate3d(0, 0, 0);
+    visibility: visible;
+  }
+
+  .cart-drawer__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .cart-drawer__header h3 {
+    margin: 0;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .cart-drawer__close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #111111;
+  }
+
+  .cart-drawer__content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+  }
+
+  /* Cart items */
+  .cart-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid #eee;
+    position: relative;
+    align-items: flex-start;
+  }
+
+  .cart-item img {
+    width: 75px;
+    height: 95px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .cart-item__details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-right: 0.5rem;
+  }
+
+  .cart-item__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.25rem;
+    width: 100%;
+  }
+
+  .cart-item__title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #111111;
+    line-height: 1.3;
+    flex: 1;
+  }
+
+  .cart-item__option {
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.75rem;
+    color: #666;
+  }
+
+  .cart-item__price {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: #111111;
+    margin-top: 0.3rem;
+  }
+
+  .cart-item__qty-selector {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
+    padding: 0.25rem 0.5rem;
+    width: 76px;
+    height: 30px;
+    box-sizing: border-box;
+    background: #ffffff;
+    flex-shrink: 0;
+  }
+
+  .cart-item__qty-btn {
+    background: none;
+    border: none;
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333333;
+    cursor: pointer;
+    padding: 0;
+    width: 18px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+  }
+
+  .cart-item__qty-btn:hover {
+    color: #000000;
+  }
+
+  .cart-item__qty-val {
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #111111;
+    text-align: center;
+  }
+
+  /* Footer */
+  .cart-drawer__footer {
+    padding: 1.5rem;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .cart-drawer__subtotal {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Archivo', sans-serif;
+  }
+
+  .cart-drawer__checkout-btn,
+  .cart-drawer__view-cart-btn {
+    display: block;
+    text-align: center;
+    padding: 0.85rem;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 800;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+  }
+
+  .cart-drawer__checkout-btn {
+    background: #000000;
+    color: #ffffff;
+  }
+
+  .cart-drawer__view-cart-btn {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
+  }
+</style>
+
 <script>
-  (function() {
+  (function () {
     if (window.CartDrawerInitialized) return;
     window.CartDrawerInitialized = true;
 
-    const drawer = document.getElementById('CartDrawer');
-    const overlay = document.getElementById('CartDrawerOverlay');
-    const closeBtn = document.getElementById('CartDrawerClose');
+    // 1) Delete stray drawer copies that live inside sections (old featured-products markup etc.)
+    document.querySelectorAll('.cart-drawer, .cart-drawer-overlay').forEach(function (el) {
+      if (!el.hasAttribute('data-global-drawer')) el.remove();
+    });
 
-    window.openCartDrawer = function() {
+    const drawer = document.querySelector('.cart-drawer[data-global-drawer]');
+    const overlay = document.querySelector('.cart-drawer-overlay[data-global-drawer]');
+    if (!drawer || !overlay) return;
+
+    // 2) Mount both directly under <body> so no section stacking context can cover them
+    document.body.appendChild(overlay);
+    document.body.appendChild(drawer);
+
+    const closeBtn = drawer.querySelector('#CartDrawerClose');
+    const countEl = drawer.querySelector('#CartDrawerCount');
+    const subtotalEl = drawer.querySelector('#CartDrawerSubtotal');
+    const contentEl = drawer.querySelector('#CartDrawerContent');
+
+    window.openCartDrawer = function () {
       drawer.classList.add('active');
+      drawer.setAttribute('aria-hidden', 'false');
       overlay.classList.add('active');
       fetchCartData();
     };
 
-    window.closeCartDrawer = function() {
+    window.closeCartDrawer = function () {
       drawer.classList.remove('active');
+      drawer.setAttribute('aria-hidden', 'true');
       overlay.classList.remove('active');
     };
 
     closeBtn?.addEventListener('click', closeCartDrawer);
     overlay?.addEventListener('click', closeCartDrawer);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && drawer.classList.contains('active')) closeCartDrawer();
+    });
 
     // Listen globally for open events
     document.addEventListener('cart:open', openCartDrawer);
@@ -50,7 +296,12 @@
         body: JSON.stringify({ id: lineKey, quantity: newQty })
       })
       .then(res => res.json())
-      .then(() => fetchCartData())
+      .then((cart) => {
+        fetchCartData();
+        // keep the header badge in sync
+        const badge = document.querySelector('#HeaderCartTrigger .cart-badge');
+        if (badge) badge.textContent = cart.item_count;
+      })
       .catch(err => console.error('Error updating quantity:', err));
     }
 
@@ -58,11 +309,11 @@
       fetch('/cart.js')
         .then(res => res.json())
         .then(cart => {
-          document.getElementById('CartDrawerCount').textContent = cart.item_count;
-          document.getElementById('CartDrawerSubtotal').textContent = 
+          countEl.textContent = cart.item_count;
+          subtotalEl.textContent =
             (cart.total_price / 100).toLocaleString('en-US', { style: 'currency', currency: cart.currency });
 
-          const content = document.getElementById('CartDrawerContent');
+          const content = contentEl;
           if (cart.items.length === 0) {
             content.innerHTML = '<p style="text-align:center; padding: 2rem 0; color:#666;">Your cart is empty.</p>';
             return;
@@ -70,7 +321,7 @@
 
           content.innerHTML = cart.items.map(item => `
             <div class="cart-item" data-line-key="${item.key}">
-              <img src="${item.image}" alt="${item.title}">
+              <img src="${item.image || ''}" alt="${item.title}">
               <div class="cart-item__details">
                 <div class="cart-item__header">
                   <span class="cart-item__title">${item.product_title}</span>
@@ -92,7 +343,8 @@
               updateCartItemQuantity(btn.dataset.key, parseInt(btn.dataset.qty, 10));
             });
           });
-        });
+        })
+        .catch(err => console.error('Error loading cart:', err));
     }
   })();
 </script>

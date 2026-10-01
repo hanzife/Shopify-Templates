@@ -1,50 +1,798 @@
 {% comment %}
-  This section is used in the product template to render product page with
-  media, content, and add-to-cart form.
+  sections/main-product.liquid
 
-  https://shopify.dev/docs/storefronts/themes/architecture/templates/product
+  Full-bleed product page:
+  - 70% gallery (2 columns, zero gaps, zero padding, scrolls through every media)
+  - 30% sticky info panel (title, price, variant swatches / size boxes, black CTA, accordions)
+  - Add to cart: AJAX add -> black cart chip flies from the CTA to the header cart icon
+    -> dispatches the existing `cart:open` event so your cart-drawer snippet opens.
+
+  Existing theme / header / cart-drawer logic is untouched.
 {% endcomment %}
 
-<div class="product-images">
-  {% for image in product.images %}
-    {% render 'image', class: 'product-image', image: image %}
-  {% endfor %}
-</div>
+{%- liquid
+  assign current_variant = product.selected_or_first_available_variant
+  assign first_media = product.featured_media
+  assign ratio = section.settings.image_ratio
+  if ratio == 'adapt'
+    assign ratio_value = first_media.aspect_ratio | default: 0.8
+  else
+    assign ratio_value = ratio
+  endif
+-%}
 
-<div class="product-info">
-  <h1>{{ product.title }}</h1>
-  <p>{{ product.price | money }}</p>
-  <p>{{ product.description }}</p>
-</div>
+<div
+  class="pp"
+  id="pp-{{ section.id }}"
+  data-pp
+  data-section-id="{{ section.id }}"
+  data-adapt-header="{{ section.settings.adapt_header }}"
+  style="--pp-ratio: {{ ratio_value }};"
+>
+  {%- comment -%} ============ LEFT: GALLERY (70%) ============ {%- endcomment -%}
+  <div class="pp-gallery" data-pp-gallery>
+    {%- for media in product.media -%}
+      {%- if forloop.index <= 4 -%}{%- assign mode = 'eager' -%}{%- else -%}{%- assign mode = 'lazy' -%}{%- endif -%}
+      <div class="pp-media" data-media-id="{{ media.id }}">
+        {%- case media.media_type -%}
+          {%- when 'image' -%}
+            {{
+              media
+              | image_url: width: 1600
+              | image_tag:
+                widths: '500, 800, 1100, 1400, 1600',
+                sizes: '(min-width: 750px) 35vw, 100vw',
+                loading: mode,
+                alt: media.alt
+            }}
+          {%- when 'video' -%}
+            {{
+              media
+              | video_tag: autoplay: true, loop: true, muted: true, playsinline: true, controls: false, image_size: '1100x'
+            }}
+          {%- when 'external_video' -%}
+            {{ media | external_video_tag }}
+          {%- else -%}
+            {{ media | media_tag: image_size: '1100x' }}
+        {%- endcase -%}
+      </div>
+    {%- endfor -%}
+    <span class="pp-counter" data-pp-counter aria-hidden="true">1 / {{ product.media.size }}</span>
+  </div>
 
-<div class="product-form">
-  {% form 'product', product %}
-    {% assign current_variant = product.selected_or_first_available_variant %}
+  {%- comment -%} ============ RIGHT: INFO (30%) ============ {%- endcomment -%}
+  <div class="pp-info">
+    <div class="pp-info__inner">
+      <h1 class="pp-title">{{ product.title }}</h1>
 
-    <select name="id">
-      {% for variant in product.variants %}
-        <option
-          value="{{ variant.id }}"
-          {% if variant == current_variant %}
-            selected="selected"
-          {% endif %}
+      <div class="pp-price-wrap">
+        <p class="pp-price" data-pp-price-row>
+          <span class="pp-price__now" data-pp-price>{{ current_variant.price | money_with_currency }}</span>
+          <s class="pp-price__was" data-pp-compare {% unless current_variant.compare_at_price > current_variant.price %}hidden{% endunless %}>{{ current_variant.compare_at_price | money_with_currency }}</s>
+        </p>
+        {%- if cart.taxes_included -%}
+          <p class="pp-tax">Taxes included.</p>
+        {%- endif -%}
+      </div>
+
+      {%- form 'product', product, class: 'pp-form', data-pp-form: 'true' -%}
+        <input type="hidden" name="id" value="{{ current_variant.id }}" data-pp-variant-id>
+        <input type="hidden" name="quantity" value="1">
+
+        {%- unless product.has_only_default_variant -%}
+          {%- for option in product.options_with_values -%}
+            {%- liquid
+              assign oname = option.name | downcase
+              assign opt_idx = option.position | minus: 1
+              assign is_color = false
+              if oname == 'color' or oname == 'colour' or oname == 'couleur' or oname == 'farbe' or oname == 'colore'
+                assign is_color = true
+              endif
+            -%}
+
+            <fieldset class="pp-opt {% if is_color %}pp-opt--color{% else %}pp-opt--size{% endif %}" data-pp-option="{{ opt_idx }}">
+              <legend class="pp-opt__label">
+                {{ option.name }}
+                {%- if is_color -%}
+                  <span class="pp-opt__value" data-pp-option-value>{{ option.selected_value }}</span>
+                {%- endif -%}
+              </legend>
+
+              <div class="pp-opt__choices">
+                {%- for value in option.values -%}
+                  {%- liquid
+                    assign swatch_image = null
+                    if is_color
+                      for v in product.variants
+                        if v.options[opt_idx] == value and v.featured_media
+                          assign swatch_image = v.featured_media.preview_image
+                          break
+                        endif
+                      endfor
+                    endif
+                  -%}
+                  <label class="pp-choice {% if is_color %}pp-choice--swatch{% endif %}">
+                    <input
+                      type="radio"
+                      class="pp-choice__input"
+                      name="pp-{{ section.id }}-{{ option.position }}"
+                      value="{{ value | escape }}"
+                      {% if option.selected_value == value %}checked{% endif %}
+                    >
+                    {%- if is_color and swatch_image -%}
+                      <span class="pp-choice__face pp-choice__face--img" title="{{ value | escape }}">
+                        {{ swatch_image | image_url: width: 120 | image_tag: loading: 'lazy', alt: value, widths: '60, 120' }}
+                      </span>
+                    {%- else -%}
+                      <span class="pp-choice__face">{{ value }}</span>
+                    {%- endif -%}
+                    {%- if is_color -%}<span class="visually-hidden">{{ value }}</span>{%- endif -%}
+                  </label>
+                {%- endfor -%}
+              </div>
+            </fieldset>
+          {%- endfor -%}
+        {%- endunless -%}
+
+        <button
+          type="submit"
+          class="pp-cta"
+          data-pp-cta
+          {% unless current_variant.available %}disabled{% endunless %}
         >
-          {{ variant.title }} - {{ variant.price | money }}
-        </option>
-      {% endfor %}
-    </select>
+          <span class="pp-cta__label" data-pp-cta-label>
+            {%- if current_variant.available -%}Add to cart{%- else -%}Sold out{%- endif -%}
+          </span>
+        </button>
 
-    <input type="text" name="quantity" min="1" value="1">
+        <p class="pp-error" data-pp-error role="alert" hidden></p>
 
-    <input type="submit" value="Add to cart">
-    {{ form | payment_button }}
-  {% endform %}
+        {%- if section.settings.show_payment_terms -%}
+          <div class="pp-terms">{{ form | payment_terms }}</div>
+        {%- endif -%}
+
+        {%- if section.settings.show_dynamic_checkout -%}
+          <div class="pp-dynamic">{{ form | payment_button }}</div>
+        {%- endif -%}
+      {%- endform -%}
+
+      {%- comment -%} Accordions {%- endcomment -%}
+      <div class="pp-acc">
+        {%- if section.blocks.size == 0 -%}
+          {%- if product.description != blank -%}
+            <details class="pp-acc__item">
+              <summary>Details &amp; Sizing<span class="pp-acc__chev" aria-hidden="true"></span></summary>
+              <div class="pp-acc__body rte">{{ product.description }}</div>
+            </details>
+          {%- endif -%}
+        {%- else -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type == 'accordion' -%}
+              <details class="pp-acc__item" {{ block.shopify_attributes }}>
+                <summary>{{ block.settings.heading }}<span class="pp-acc__chev" aria-hidden="true"></span></summary>
+                <div class="pp-acc__body rte">
+                  {%- if block.settings.use_product_description -%}
+                    {{ product.description }}
+                  {%- else -%}
+                    {{ block.settings.content }}
+                  {%- endif -%}
+                </div>
+              </details>
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
 </div>
+
+<script type="application/json" id="pp-variants-{{ section.id }}">
+  [
+    {%- for variant in product.variants -%}
+      {
+        "id": {{ variant.id }},
+        "options": {{ variant.options | json }},
+        "available": {{ variant.available | json }},
+        "price": {{ variant.price | money_with_currency | json }},
+        "on_sale": {% if variant.compare_at_price > variant.price %}true{% else %}false{% endif %},
+        "compare": {% if variant.compare_at_price > variant.price %}{{ variant.compare_at_price | money_with_currency | json }}{% else %}null{% endif %},
+        "media": {{ variant.featured_media.id | json }}
+      }{% unless forloop.last %},{% endunless %}
+    {%- endfor -%}
+  ]
+</script>
+
+<script>
+  (function () {
+    var root = document.getElementById('pp-{{ section.id }}');
+    if (!root || root.dataset.ppReady) return;
+    root.dataset.ppReady = '1';
+
+    var variants = JSON.parse(document.getElementById('pp-variants-{{ section.id }}').textContent);
+    var form = root.querySelector('[data-pp-form]');
+    var cta = root.querySelector('[data-pp-cta]');
+    var ctaLabel = root.querySelector('[data-pp-cta-label]');
+    var idInput = root.querySelector('[data-pp-variant-id]');
+    var priceEl = root.querySelector('[data-pp-price]');
+    var compareEl = root.querySelector('[data-pp-compare]');
+    var errorEl = root.querySelector('[data-pp-error]');
+    var groups = Array.prototype.slice.call(root.querySelectorAll('[data-pp-option]'));
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    var busy = false;
+    var lastMedia = null;
+
+    /* ---------- Header offset ---------- */
+    var siteHeader = document.getElementById('SiteHeader');
+
+    function headerOffset() {
+      return siteHeader ? siteHeader.offsetHeight : 0;
+    }
+
+    function syncHeaderHeight() {
+      if (siteHeader) root.style.setProperty('--pp-header-h', siteHeader.offsetHeight + 'px');
+    }
+
+    syncHeaderHeight();
+    window.addEventListener('resize', syncHeaderHeight);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncHeaderHeight);
+
+
+    var CART_ICON =
+      '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M3 4h2.2l2.1 10.2a1.6 1.6 0 0 0 1.6 1.3h8.1a1.6 1.6 0 0 0 1.6-1.2L20.4 8H6.1"/>' +
+      '<circle cx="9.5" cy="19.5" r="1.3" fill="currentColor" stroke="none"/>' +
+      '<circle cx="17" cy="19.5" r="1.3" fill="currentColor" stroke="none"/></svg>';
+
+    /* ---------- Variant selection ---------- */
+    function selectedOptions() {
+      return groups.map(function (g) {
+        var c = g.querySelector('input:checked');
+        return c ? c.value : null;
+      });
+    }
+
+    function findVariant(opts) {
+      return variants.find(function (v) {
+        return v.options.every(function (o, i) { return o === opts[i]; });
+      });
+    }
+
+    function markAvailability(opts) {
+      groups.forEach(function (g, gi) {
+        g.querySelectorAll('.pp-choice').forEach(function (label) {
+          var val = label.querySelector('input').value;
+          var ok = variants.some(function (v) {
+            if (!v.available || v.options[gi] !== val) return false;
+            return opts.every(function (o, i) { return i === gi || o === v.options[i]; });
+          });
+          label.classList.toggle('is-unavailable', !ok);
+        });
+      });
+    }
+
+     function scrollToMedia(id) {
+      if (!id || id === lastMedia) return;
+      lastMedia = id;
+      var el = root.querySelector('[data-media-id="' + id + '"]');
+      if (!el) return;
+      var r = el.getBoundingClientRect();
+      var offset = headerOffset();
+      var visible = r.top >= offset && r.bottom <= window.innerHeight;
+      if (visible) return;
+      if (window.innerWidth < 750) {
+        el.parentNode.scrollTo({ left: el.offsetLeft, behavior: reduced ? 'auto' : 'smooth' });
+      } else {
+        window.scrollTo({ top: window.scrollY + r.top - offset, behavior: reduced ? 'auto' : 'smooth' });
+      }
+    }
+
+    function updateUI(scrollMedia) {
+      var opts = selectedOptions();
+      var v = findVariant(opts);
+
+      groups.forEach(function (g) {
+        var out = g.querySelector('[data-pp-option-value]');
+        var c = g.querySelector('input:checked');
+        if (out && c) out.textContent = c.value;
+      });
+
+      markAvailability(opts);
+      errorEl.hidden = true;
+
+      if (!v) {
+        cta.disabled = true;
+        ctaLabel.textContent = 'Unavailable';
+        return;
+      }
+
+      idInput.value = v.id;
+      priceEl.textContent = v.price;
+      if (v.on_sale && v.compare) {
+        compareEl.textContent = v.compare;
+        compareEl.hidden = false;
+      } else {
+        compareEl.hidden = true;
+      }
+
+      cta.disabled = !v.available;
+      if (!busy) ctaLabel.textContent = v.available ? 'Add to cart' : 'Sold out';
+
+      try {
+        var url = new URL(window.location.href);
+        url.searchParams.set('variant', v.id);
+        window.history.replaceState({}, '', url.toString());
+      } catch (e) {}
+
+      if (scrollMedia) scrollToMedia(v.media);
+    }
+
+    groups.forEach(function (g) {
+      g.addEventListener('change', function () { updateUI(true); });
+    });
+    updateUI(false);
+
+    /* ---------- Fly-to-cart animation ---------- */
+    function flyToCart(fromEl) {
+      var target = document.getElementById('HeaderCartTrigger');
+      if (!target || reduced || !fromEl.animate) return { done: Promise.resolve(), cancel: function () {} };
+
+      var size = 44;
+      var a = fromEl.getBoundingClientRect();
+      var b = target.getBoundingClientRect();
+      var sx = a.left + a.width / 2 - size / 2;
+      var sy = a.top + a.height / 2 - size / 2;
+      var ex = b.left + b.width / 2 - size / 2;
+      var ey = b.top + b.height / 2 - size / 2;
+      var cx = sx + (ex - sx) * 0.3;
+      var cy = Math.min(sy, ey) - 150;
+
+      var chip = document.createElement('div');
+      chip.className = 'pp-fly';
+      chip.innerHTML = CART_ICON;
+      document.body.appendChild(chip);
+
+      var frames = [];
+      var steps = 28;
+      for (var i = 0; i <= steps; i++) {
+        var t = i / steps;
+        var x = (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * cx + t * t * ex;
+        var y = (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * cy + t * t * ey;
+        var s = 1 - 0.55 * Math.pow(t, 1.4);
+        var o = t < 0.08 ? t / 0.08 : t > 0.94 ? (1 - t) / 0.06 : 1;
+        frames.push({ transform: 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')', opacity: o, offset: t });
+      }
+
+      var anim = chip.animate(frames, { duration: 1000, easing: 'cubic-bezier(.55,.05,.25,1)', fill: 'forwards' });
+      var done = anim.finished.then(function () { chip.remove(); }).catch(function () { chip.remove(); });
+      return { done: done, cancel: function () { anim.cancel(); chip.remove(); } };
+    }
+
+    function bumpHeaderCart(count) {
+      var trigger = document.getElementById('HeaderCartTrigger');
+      if (!trigger) return;
+      var badge = trigger.querySelector('.cart-badge');
+      if (!badge && count > 0) {
+        badge = document.createElement('span');
+        badge.className = 'cart-badge';
+        trigger.insertBefore(badge, trigger.firstChild);
+      }
+      if (badge) badge.textContent = count;
+      if (trigger.animate && !reduced) {
+        trigger.animate(
+          [{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }, { transform: 'scale(.92)' }, { transform: 'scale(1)' }],
+          { duration: 480, easing: 'ease-out' }
+        );
+      }
+    }
+
+    /* ---------- Add to cart ---------- */
+    function setLabel(text) { ctaLabel.textContent = text; }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (busy || cta.disabled) return;
+      busy = true;
+      errorEl.hidden = true;
+      cta.classList.add('is-loading');
+      setLabel('Adding…');
+
+      var fly = flyToCart(cta);
+      var request = fetch('/cart/add.js', {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+        body: new FormData(form)
+      }).then(function (res) {
+        return res.json().then(function (data) {
+          if (!res.ok) throw new Error(data.description || data.message || 'Could not add this item.');
+          return data;
+        });
+      });
+
+      request
+        .then(function (item) {
+          return Promise.all([fly.done, fetch('/cart.js').then(function (r) { return r.json(); })]).then(function (r) { return r[1]; });
+        })
+        .then(function (cart) {
+          bumpHeaderCart(cart.item_count);
+          document.dispatchEvent(new CustomEvent('cart:open', { bubbles: true, detail: { cart: cart } }));
+          setLabel('Added');
+          setTimeout(function () {
+            busy = false;
+            cta.classList.remove('is-loading');
+            updateUI(false);
+          }, 1400);
+        })
+        .catch(function (err) {
+          fly.cancel();
+          busy = false;
+          cta.classList.remove('is-loading');
+          errorEl.textContent = err.message;
+          errorEl.hidden = false;
+          updateUI(false);
+        });
+    });
+
+    /* ---------- Mobile gallery counter ---------- */
+    var gallery = root.querySelector('[data-pp-gallery]');
+    var counter = root.querySelector('[data-pp-counter]');
+    var items = gallery.querySelectorAll('.pp-media');
+    if ('IntersectionObserver' in window && counter) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting && en.intersectionRatio > 0.6) {
+            var idx = Array.prototype.indexOf.call(items, en.target) + 1;
+            counter.textContent = idx + ' / ' + items.length;
+          }
+        });
+      }, { root: null, threshold: [0.6] });
+      items.forEach(function (it) { io.observe(it); });
+    }
+
+    /* ---------- Header adapter ----------
+       theme.liquid only docks the logo / solidifies the header when a #HeroSection exists.
+       On the product page there is no hero, so we apply the same final state here
+       (docked logo + solid header) without touching the theme scripts. */
+    if (root.dataset.adaptHeader === 'true' && !document.getElementById('HeroSection')) {
+      var header = document.getElementById('SiteHeader');
+      var logo = document.getElementById('HeroMainLogo');
+      var slot = document.getElementById('HeaderLogoSlot');
+      var slotText = slot && slot.querySelector('.header__logo-text');
+      if (header && logo && slot && slotText) {
+        document.documentElement.classList.add('pp-header-adapt');
+        header.classList.add('is-solid');
+        logo.classList.add('is-solid');
+
+        var dock = function (instant) {
+          if (instant) logo.style.transition = 'none';
+          var r = slot.getBoundingClientRect();
+          var from = parseFloat(getComputedStyle(logo).fontSize);
+          var to = parseFloat(getComputedStyle(slotText).fontSize);
+          logo.style.setProperty('--logo-x', r.left + r.width / 2 + 'px');
+          logo.style.setProperty('--logo-y', r.top + r.height / 2 + 'px');
+          logo.style.setProperty('--logo-scale', to / from);
+          logo.classList.add('is-docked');
+          if (instant) requestAnimationFrame(function () { requestAnimationFrame(function () { logo.style.transition = ''; }); });
+        };
+        dock(true);
+        window.addEventListener('resize', function () { dock(true); });
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { dock(true); });
+      }
+    }
+  })();
+</script>
+
+{% stylesheet %}
+  /* ---------- Layout ---------- */
+  .pp {
+    --pp-black: #000;
+    --pp-ink: #111;
+    --pp-line: #e6e6e6;
+    --pp-tile: #f6f6f6;
+    --pp-header-h: 4rem; /* real value is measured by JS */
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+    width: 100%;
+    margin: 0;
+    padding: var(--pp-header-h) 0 0;
+    background: #fff;
+    color: var(--pp-ink);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  .pp *, .pp *::before, .pp *::after { box-sizing: border-box; }
+
+  .visually-hidden {
+    position: absolute !important;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ---------- Gallery (70%) ---------- */
+  .pp-gallery {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    padding: 0;
+    margin: 0;
+    background: var(--pp-tile); /* fills the empty cell when the media count is odd */
+  }
+
+  .pp-media {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    aspect-ratio: var(--pp-ratio, 4 / 5);
+    overflow: hidden;
+    background: var(--pp-tile);
+  }
+
+  .pp-media img,
+  .pp-media video,
+  .pp-media iframe,
+  .pp-media model-viewer {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 0;
+  }
+
+  .pp-counter { display: none; }
+
+  /* ---------- Info panel (30%) ---------- */
+  .pp-info {
+    position: sticky;
+    top: var(--pp-header-h);
+    align-self: start;
+    height: calc(100vh - var(--pp-header-h));
+    height: calc(100dvh - var(--pp-header-h));
+    overflow-y: auto;
+    scrollbar-width: none;
+    background: #fff;
+  }
+  .pp-info::-webkit-scrollbar { display: none; }
+
+  .pp-info__inner {
+    padding: 2rem 2rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .pp-info__inner > * {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .pp-title {
+    margin: 0;
+    font-size: clamp(1.6rem, 2.3vw, 2.6rem);
+    font-weight: 500;
+    line-height: 1.04;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+
+  .pp-price-wrap { margin-top: 1.25rem; }
+  .pp-price { margin: 0; font-size: 0.875rem; font-weight: 500; display: flex; gap: 0.6rem; align-items: baseline; }
+  .pp-price__was { color: #8a8a8a; font-weight: 400; }
+  .pp-tax { margin: 0.15rem 0 0; font-size: 0.6875rem; color: #777; }
+
+  /* ---------- Options ---------- */
+  .pp-form { margin-top: 2rem; }
+
+  .pp-opt { border: 0; margin: 0 0 1.5rem; padding: 0; min-width: 0; }
+  .pp-opt__label { padding: 0; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.6rem; }
+  .pp-opt__value { margin-left: 0.5rem; font-weight: 400; color: #555; }
+  .pp-opt__choices { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+  .pp-choice { position: relative; cursor: pointer; }
+  .pp-choice__input {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    margin: 0; opacity: 0; cursor: pointer;
+  }
+
+  /* Size boxes */
+  .pp-opt--size .pp-choice { flex: 1 1 0; min-width: 4.25rem; }
+  .pp-opt--size .pp-choice__face {
+    display: flex; align-items: center; justify-content: center;
+    height: 2.75rem;
+    border: 1px solid var(--pp-line);
+    background: #fff;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+  }
+  .pp-opt--size .pp-choice:hover .pp-choice__face { border-color: var(--pp-black); }
+  .pp-opt--size .pp-choice__input:checked + .pp-choice__face {
+    background: var(--pp-black); color: #fff; border-color: var(--pp-black);
+  }
+  .pp-opt--size .pp-choice.is-unavailable .pp-choice__face {
+    color: #b4b4b4;
+    background: linear-gradient(to top right, transparent calc(50% - .5px), #cfcfcf, transparent calc(50% + .5px)) #fff;
+  }
+  .pp-opt--size .pp-choice.is-unavailable .pp-choice__input:checked + .pp-choice__face {
+    color: #fff; background: var(--pp-black);
+  }
+
+  /* Color swatches */
+  .pp-choice--swatch { flex: 0 0 auto; }
+  .pp-choice--swatch .pp-choice__face {
+    display: flex; align-items: center; justify-content: center;
+    width: 2.25rem; height: 2.25rem; min-width: 2.25rem;
+    padding: 2px;
+    border: 1px solid var(--pp-line);
+    background: #fff;
+    font-size: 0.6875rem;
+    transition: border-color .2s ease;
+  }
+  .pp-choice--swatch .pp-choice__face--img img { width: 100%; height: 100%; object-fit: cover; display: block; background: var(--pp-tile); }
+  .pp-choice--swatch .pp-choice__input:checked + .pp-choice__face { border-color: var(--pp-black); box-shadow: inset 0 0 0 1px var(--pp-black); }
+  .pp-choice--swatch:hover .pp-choice__face { border-color: #777; }
+  .pp-choice--swatch.is-unavailable .pp-choice__face { opacity: .45; }
+
+  .pp-choice__input:focus-visible + .pp-choice__face { outline: 2px solid var(--pp-black); outline-offset: 2px; }
+
+  /* ---------- CTA ---------- */
+  .pp-cta {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 3.25rem;
+    margin: 0;
+    border: 1px solid var(--pp-black);
+    border-radius: 0;
+    background: var(--pp-black);
+    color: #fff;
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: background-color .2s ease, color .2s ease, opacity .2s ease;
+  }
+  .pp-cta:hover:not(:disabled) { background: #fff; color: var(--pp-black); }
+  .pp-cta:focus-visible { outline: 2px solid var(--pp-black); outline-offset: 3px; }
+  .pp-cta:disabled { background: #e9e9e9; border-color: #e9e9e9; color: #8a8a8a; cursor: not-allowed; }
+  .pp-cta.is-loading { pointer-events: none; }
+
+  .pp-error { margin: 0.75rem 0 0; font-size: 0.8125rem; color: #b00020; }
+  .pp-terms { margin-top: 1rem; text-align: center; font-size: 0.75rem; }
+  .pp-terms form { margin: 0; }
+  .pp-dynamic { margin-top: 0.75rem; }
+
+  /* ---------- Accordions ---------- */
+  .pp-acc { margin-top: 1.75rem; border-top: 1px solid var(--pp-line); }
+  .pp-acc__item { border-bottom: 1px solid var(--pp-line); }
+  .pp-acc__item summary {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.95rem 0;
+    font-size: 0.8125rem; font-weight: 500;
+    cursor: pointer; list-style: none;
+  }
+  .pp-acc__item summary::-webkit-details-marker { display: none; }
+  .pp-acc__item summary:focus-visible { outline: 2px solid var(--pp-black); outline-offset: 2px; }
+  .pp-acc__chev {
+    width: 0.5rem; height: 0.5rem;
+    border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg) translateY(-2px);
+    transition: transform .25s ease;
+  }
+  .pp-acc__item[open] .pp-acc__chev { transform: rotate(-135deg) translateY(-2px); }
+  .pp-acc__body { padding: 0 0 1.25rem; font-size: 0.8125rem; line-height: 1.6; color: #333; }
+  .pp-acc__body > *:first-child { margin-top: 0; }
+  .pp-acc__body > *:last-child { margin-bottom: 0; }
+
+  /* ---------- Flying cart chip ---------- */
+  .pp-fly {
+    position: fixed; top: 0; left: 0;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: #000; color: #fff;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .28);
+    z-index: 950;
+    pointer-events: none;
+    will-change: transform, opacity;
+    opacity: 0;
+  }
+
+  /* ---------- Header adapter (product page has no hero) ---------- */
+  .pp-header-adapt .brand-logo { color: #111; }
+  .pp-header-adapt .site-header.is-solid .header__link,
+  .pp-header-adapt .site-header.is-solid .header__icon-link { color: #111; }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 749px) {
+    .pp { display: block; }
+
+    .pp-gallery {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .pp-gallery::-webkit-scrollbar { display: none; }
+    .pp-media { flex: 0 0 100%; scroll-snap-align: start; }
+
+    .pp-counter {
+      display: block;
+      position: sticky; right: 0.75rem; bottom: 0.75rem;
+      margin: 0 0.75rem 0.75rem auto;
+      align-self: flex-end;
+      position: absolute;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 0.6875rem; font-weight: 500;
+      z-index: 2;
+    }
+
+    .pp-info { position: static; height: auto; overflow: visible; }
+    .pp-info__inner { padding: 1.5rem 1.25rem 2.5rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pp * { transition-duration: .01ms !important; }
+  }
+{% endstylesheet %}
 
 {% schema %}
 {
   "name": "t:general.product",
-  "settings": [],
+  "settings": [
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "label": "Gallery image ratio",
+      "options": [
+        { "value": "4 / 5", "label": "Portrait 4:5" },
+        { "value": "3 / 4", "label": "Portrait 3:4" },
+        { "value": "1 / 1", "label": "Square" },
+        { "value": "adapt", "label": "Match first image" }
+      ],
+      "default": "4 / 5"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_payment_terms",
+      "label": "Show installments line (Shop Pay Installments / Klarna)",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_dynamic_checkout",
+      "label": "Show dynamic checkout buttons",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "adapt_header",
+      "label": "Dock logo and use solid header on this page",
+      "info": "The theme only does this on pages with a hero section.",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "accordion",
+      "name": "Accordion",
+      "limit": 8,
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading", "default": "Details & Sizing" },
+        { "type": "checkbox", "id": "use_product_description", "label": "Use product description as content", "default": false },
+        { "type": "richtext", "id": "content", "label": "Content" }
+      ]
+    }
+  ],
   "disabled_on": {
     "groups": ["header", "footer"]
   }

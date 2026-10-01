@@ -220,24 +220,23 @@
 {% endstylesheet %}
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const cartTrigger = document.getElementById('HeaderCartTrigger');
+  (function () {
+    if (window.__headerCartBound) return;
+    window.__headerCartBound = true;
 
-    if (cartTrigger) {
-      cartTrigger.addEventListener('click', (e) => {
-        e.preventDefault();
+    // Delegated click: works on every page, even if the header re-renders
+    document.addEventListener('click', function (e) {
+      var trigger = e.target.closest && e.target.closest('#HeaderCartTrigger');
+      if (!trigger) return;
+      e.preventDefault();
 
-        // Dispatch standard drawer event formats
+      if (typeof window.openCartDrawer === 'function') {
+        window.openCartDrawer();
+      } else {
         document.dispatchEvent(new CustomEvent('cart:open', { bubbles: true }));
-        document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
-
-        // Native Dawn cart-drawer fallback
-        if (window.Shopify && Shopify.theme && Shopify.theme.cart) {
-          document.querySelector('cart-drawer')?.open();
-        }
-      });
-    }
-  });
+      }
+    });
+  })();
 
   function addToCart(variantId) {
     fetch('/cart/add.js', {
@@ -247,7 +246,6 @@
     })
     .then(res => res.json())
     .then((cartData) => {
-      // Open cart drawer globally with cart data
       document.dispatchEvent(new CustomEvent('cart:open', {
         bubbles: true,
         detail: { cart: cartData }
@@ -256,6 +254,7 @@
     .catch(err => console.error('Error adding to cart:', err));
   }
 </script>
+
 
 {% schema %}
 {

@@ -27,12 +27,13 @@
     {{ content_for_header }}
 
 
-    <style>
+   <style>
       body {
         margin: 0 !important;
         padding: 0 !important;
         max-width: 100% !important;
-        overflow-x: clip !important; /* Preserves position: sticky behavior */
+        overflow-x: clip !important;
+        background-color: #000000 !important; /* Ensures the page root is black */
       }
 
       #MainContent,
@@ -43,25 +44,24 @@
         padding: 0 !important;
       }
 
-
       .shopify-section:has(#HeroSection),
       .shopify-section:has([data-section-type="hero"]) {
         position: sticky;
         top: 0;
         z-index: 1;
-        /* Ensure Hero fits screen height cleanly for scroll pass-through */
         min-height: 100vh;
         will-change: transform;
       }
 
-     #MainContent .shopify-section:not(:has(#HeroSection)):not(:has([data-section-type="hero"])) {
+      /* Apply white background ONLY to regular content sections, excluding footers */
+      #MainContent .shopify-section:not(:has(#HeroSection)):not(:has([data-section-type="hero"])):not(:has(footer)):not([id*="footer"]) {
         position: relative;
         z-index: 2;
         background-color: var(--gradient-background, #ffffff);
         box-shadow: none !important;
       }
 
-      /* 2. Target ONLY the section immediately following the Hero for the top shadow */
+      /* Target ONLY the section immediately following the Hero for the top shadow */
       .shopify-section:has(#HeroSection) + .shopify-section,
       .shopify-section:has([data-section-type="hero"]) + .shopify-section {
         box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08) !important;
@@ -77,6 +77,32 @@
         margin-left: 0 !important;
         margin-right: 0 !important;
       }
+
+      #MainContent > .shopify-section:has(#pp-{{ section.id }}),
+      .shopify-section:has(.pp) {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      #MainContent > .shopify-section:has(.pp) {
+        display: block !important;
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* The section fills its parent, no viewport-width hacks */
+      .pp {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+      }
+
+
     </style>
 
 
