@@ -1,9 +1,3 @@
-{%- comment -%}
-  The ONE logo. It starts centered over the hero, then docks into the header on scroll.
-  Position and animation are driven by the script in theme.liquid.
-{%- endcomment -%}
-<a href="{{ routes.root_url }}" class="brand-logo" id="HeroMainLogo">FOUND</a>
-
 <header class="site-header" id="SiteHeader">
   <div class="header__inner">
 
@@ -50,6 +44,12 @@
   </div>
 </header>
 
+{%- comment -%}
+  The ONE logo. Moved AFTER the header so the CSS sibling selector can target it.
+  Position and animation are driven by the script in theme.liquid.
+{%- endcomment -%}
+<a href="{{ routes.root_url }}" class="brand-logo" id="HeroMainLogo">FOUND</a>
+
 {% stylesheet %}
   /* ---------- Header bar ---------- */
   .site-header {
@@ -69,7 +69,7 @@
                 box-shadow 0.45s cubic-bezier(0.7, 0, 0.2, 1);
   }
 
- .site-header.is-solid {
+  .site-header.is-solid {
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -151,6 +151,11 @@
     pointer-events: auto;
   }
 
+  /* Now successfully triggers because the logo is placed AFTER the header */
+  .site-header.is-solid ~ .brand-logo {
+    color: #111111;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .brand-logo { transition-duration: 0.01s; }
   }
@@ -184,17 +189,19 @@
     color: #111111;
   }
 
+  /* Universal rule: NO fills, ONLY clean strokes that strictly adapt to text color */
+  .header__icon-link svg,
+  .header__icon-link svg * {
+    fill: none !important;
+    stroke: currentColor !important;
+    stroke-width: 2px !important;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   .header__icon-link svg {
     width: 1.35rem;
     height: 1.35rem;
-  }
-
-  .header__icon-link svg:not(.header__wishlist-icon) {
-    fill: currentColor;
-  }
-
-  .header__wishlist-icon {
-    stroke: currentColor;
   }
 
   .cart-badge {
@@ -254,7 +261,6 @@
     .catch(err => console.error('Error adding to cart:', err));
   }
 </script>
-
 
 {% schema %}
 {
